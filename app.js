@@ -653,6 +653,7 @@ function cancelEdit(entityType) {
             document.getElementById('newRawMaterialNameGroup').style.display = 'block';
             document.getElementById('saveRawMaterialBtn').textContent = 'Aggiungi Materia Prima';
             document.getElementById('cancelRawMaterialBtn').style.display = 'none';
+            currentEditingId.rawMaterials = null; // Ensure editing state is reset
             break;
         case 'articles':
             document.getElementById('articleId').value = 'new';
@@ -2397,7 +2398,7 @@ function reschedulePlanning(planId) {
             updateAllTables(); // Explicitly call update after data change
             showNotification(`Lotto ${originalPlan.articleCode} (ID: ${planId}) riprogrammato con successo! Nuova data di consegna: ${new Date(recalculatedDetails.estimatedDeliveryDate).toLocaleDateString('it-IT')}`, 'success');
         } else {
-            showNotification('Impossibile riprogrammare il lotto con la nuova data. Controlla i dettagli.', 'error');
+            showNotification('Impossibile riprogrammare il lotto con la nuova data. Controlla i dati inseriti.', 'error');
         }
     } else {
         showNotification('Lotto di pianificazione non trovato per la riprogrammazione.', 'error');
