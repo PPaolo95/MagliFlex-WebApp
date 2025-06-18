@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MagliFlex - Pianificazione Produzione</title>
+    <!-- Collegamento al file CSS esterno -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Overlay di Login -->
+    <div id="loginOverlay" class="modal-overlay show">
+        <div class="login-container">
+            <h2>Accedi a MagliFlex</h2>
+            <div class="form-group">
+                <label for="usernameInput">Nome Utente:</label>
+                <input type="text" id="usernameInput" placeholder="Inserisci il tuo nome utente" aria-label="Nome Utente" tabindex="0">
+            </div>
+            <button class="btn login-button" onclick="loginUser()" aria-label="Login" tabindex="0">Login</button>
+            <p class="login-info">Inserisci un nome utente qualsiasi per accedere.</p>
+        </div>
+    </div>
+
+    <div class="container" id="appContent" style="display: none;">
+        <div class="top-bar">
+            <button class="hamburger-btn" aria-label="Apri menu di navigazione" tabindex="0" onclick="toggleNavMenu()">
+                <span class="hamburger-icon"></span>
+                <span class="hamburger-icon"></span>
+                <span class="hamburger-icon"></span>
+            </button>
+            <div class="app-title-mobile">
+                <h1>🧶 MagliFlex</h1>
+            </div>
+            <div class="top-right-nav">
+                <button class="nav-btn bell-btn" onclick="openNotificationsModal()" aria-label="Apri i messaggi importanti" tabindex="0">
+                    <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span id="notificationBadge" class="notification-badge" aria-live="polite" aria-atomic="true">0</span>
+                </button>
+                <button class="nav-btn btn-danger" onclick="logoutUser()" aria-label="Esci dall'applicazione" tabindex="0">Logout</button>
+            </div>
+        </div>
+
+        <div class="header desktop-only">
+            <h1>🧶 MagliFlex</h1>
+            <p>Sistema di Pianificazione Produzione</p>
+        </div>
+
+        <nav id="mainNavMenu" class="main-nav-menu" role="navigation" aria-label="Menu di Navigazione Principale">
+            <button class="nav-btn active" onclick="showPage('phases')" aria-label="Vai alla pagina Fasi" tabindex="0">Fasi</button>
+            <button class="nav-btn" onclick="showPage('machines')" aria-label="Vai alla pagina Macchinari" tabindex="0">Macchinari</button>
+            <button class="nav-btn" onclick="showPage('departments')" aria-label="Vai alla pagina Reparti" tabindex="0">Reparti</button>
+            <button class="nav-btn" onclick="showPage('rawMaterials')" aria-label="Vai alla pagina Materie Prime" tabindex="0">Materie Prime</button>
+            <button class="nav-btn" onclick="showPage('articles')" aria-label="Vai alla pagina Articoli" tabindex="0">Articoli</button>
+            <button class="nav-btn" onclick="showPage('planning')" aria-label="Vai alla pagina Pianificazione" tabindex="0">Pianificazione</button>
+            <button class="nav-btn" onclick="showPage('schedule')" aria-label="Vai alla pagina Programma" tabindex="0">Programma</button>
+            <button class="nav-btn" onclick="showPage('dashboard')" aria-label="Vai alla pagina Dashboard" tabindex="0">Dashboard</button>
+        </nav>
+
+        <!-- Pagina Fasi -->
+        <div id="phases" class="page active" role="region" aria-labelledby="phases-heading">
+            <h2 id="phases-heading">🔧 Gestione Fasi di Lavorazione</h2>
+            <div class="form-group">
+                <label for="phaseName">Nome Fase</label>
+                <input type="text" id="phaseName" placeholder="Es: Tessitura, Rifinitura..." aria-label="Nome della fase di lavorazione" tabindex="0">
+            </div>
+            <div class="form-group">
+                <label for="phaseTime">Tempo di Lavorazione (minuti per pezzo)</label>
+                <input type="number" id="phaseTime" placeholder="30" min="1" aria-label="Tempo di lavorazione in minuti per pezzo" tabindex="0">
+            </div>
+            <button class="btn" id="savePhaseBtn" onclick="addPhase()" aria-label="Aggiungi o Salva Fase" tabindex="0">Aggiungi Fase</button>
+            <button class="btn btn-danger" id="cancelPhaseBtn" onclick="cancelEdit('phases')" style="display:none;" aria-label="Annulla modifica fase" tabindex="0">Annulla</button>
+            
+            <table class="table" role="table" aria-label="Tabella Fasi di Lavorazione">
+                <thead>
+                    <tr>
+                        <th scope="col">Nome Fase</th>
+                        <th scope="col">Tempo (min/pezzo)</th>
+                        <th scope="col">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="phasesTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Pagina Macchinari -->
+        <div id="machines" class="page" role="region" aria-labelledby="machines-heading">
+            <h2 id="machines-heading">🏭 Gestione Macchinari</h2>
+            <div class="form-group">
+                <label for="machineName">Nome Macchinario</label>
+                <input type="text" id="machineName" placeholder="Es: Telaio A, Macchina Cucire B..." aria-label="Nome del macchinario" tabindex="0">
+            </div>
+            <div class="form-group">
+                <label for="machineCapacity">Capacità Giornaliera (pezzi/giorno)</label>
+                <input type="number" id="machineCapacity" placeholder="100" min="1" aria-label="Capacità giornaliera in pezzi per giorno" tabindex="0">
+            </div>
+            <button class="btn" id="saveMachineBtn" onclick="addMachine()" aria-label="Aggiungi o Salva Macchinario" tabindex="0">Aggiungi Macchinario</button>
+            <button class="btn btn-danger" id="cancelMachineBtn" onclick="cancelEdit('machines')" style="display:none;" aria-label="Annulla modifica macchinario" tabindex="0">Annulla</button>
+            
+            <table class="table" role="table" aria-label="Tabella Macchinari">
+                <thead>
+                    <tr>
+                        <th scope="col">Nome Macchinario</th>
+                        <th scope="col">Capacità (pezzi/giorno)</th>
+                        <th scope="col">Utilizzo Attuale</th>
+                        <th scope="col">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="machinesTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Pagina Reparti -->
+        <div id="departments" class="page" role="region" aria-labelledby="departments-heading">
+            <h2 id="departments-heading">🏢 Gestione Reparti</h2>
+            <div class="department-form-section">
+                <h3>Aggiungi / Modifica Reparto</h3>
+                <div class="form-group">
+                    <label for="departmentId">Reparto (Modifica esistente o Aggiungi nuovo)</label>
+                    <select id="departmentId" onchange="loadDepartmentForEdit()" aria-label="Seleziona reparto per modifica o aggiungine uno nuovo" tabindex="0">
+                        <option value="new">-- Nuovo Reparto --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="departmentName">Nome Reparto</label>
+                    <input type="text" id="departmentName" placeholder="Es: Confezionamento" aria-label="Nome del reparto" tabindex="0">
+                </div>
+                <div class="form-group">
+                    <label for="departmentMachineTypes">Tipi Macchinari Gestiti (separati da virgola, es: Rettilinea, Manuale)</label>
+                    <input type="text" id="departmentMachineTypes" placeholder="Rettilinea, Manuale" aria-label="Tipi di macchinari gestiti dal reparto" tabindex="0">
+                </div>
+                <div class="form-group">
+                    <label for="departmentFinenesses">Finezza Macchinari Gestiti (separati da virgola, es: 3, 7, 12, 0 per Manuale)</label>
+                    <input type="text" id="departmentFinenesses" placeholder="3, 7, 12" aria-label="Finezza dei macchinari gestiti dal reparto" tabindex="0">
+                </div>
+                <div class="form-group">
+                    <label for="departmentPhaseIds">Fasi Gestite (seleziona una o più)</label>
+                    <select id="departmentPhaseIds" multiple size="5" aria-label="Fasi gestite dal reparto" tabindex="0">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                <button class="btn btn-success" id="saveDepartmentBtn" onclick="saveDepartment()" aria-label="Salva o Modifica Reparto" tabindex="0">Salva Reparto</button>
+                <button class="btn btn-danger" id="cancelDepartmentBtn" onclick="cancelEdit('departments')" style="display:none;" aria-label="Annulla modifica reparto" tabindex="0">Annulla</button>
+            </div>
+
+            <h3>Elenco Reparti</h3>
+            <table class="table" role="table" aria-label="Tabella Elenco Reparti">
+                <thead>
+                    <tr>
+                        <th scope="col">Nome Reparto</th>
+                        <th scope="col">Tipi Macchinari</th>
+                        <th scope="col">Finezza Macchinari</th>
+                        <th scope="col">Fasi Gestite</th>
+                        <th scope="col">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="departmentsTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Pagina Materie Prime -->
+        <div id="rawMaterials" class="page" role="region" aria-labelledby="rawMaterials-heading">
+            <h2 id="rawMaterials-heading">📦 Gestione Magazzino Materie Prime</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Carica Materia Prima</h3>
+                     <div class="form-group">
+                        <label for="rawMaterialBarcode">Scansiona Codice Barcode</label>
+                        <input type="text" id="rawMaterialBarcode" placeholder="Scansiona qui..." aria-label="Campo per scansionare il codice a barre" tabindex="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="rawMaterialSelect">Materia Prima</label>
+                        <select id="rawMaterialSelect" onchange="toggleNewRawMaterialInput()" aria-label="Seleziona materia prima esistente o aggiungine una nuova" tabindex="0">
+                            <option value="new">-- Aggiungi Nuova Materia Prima --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="newRawMaterialNameGroup" style="display:none;">
+                        <label for="newRawMaterialName">Nome Nuova Materia Prima</label>
+                        <input type="text" id="newRawMaterialName" placeholder="Es: Cotone 100% Biologico" aria-label="Nome della nuova materia prima" tabindex="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="rawMaterialUnit">Unità di Misura</label>
+                        <input type="text" id="rawMaterialUnit" placeholder="Es: kg, metri, pezzi" aria-label="Unità di misura della materia prima" tabindex="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="rawMaterialQuantity">Quantità da Caricare</label>
+                        <input type="number" id="rawMaterialQuantity" placeholder="100" min="0" aria-label="Quantità da caricare" tabindex="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="rawMaterialLoadDate">Data di Carico</label>
+                        <input type="date" id="rawMaterialLoadDate" aria-label="Data di carico della materia prima" tabindex="0">
+                    </div>
+                    <button class="btn btn-success" id="saveRawMaterialBtn" onclick="addRawMaterialOrStock()" aria-label="Carica o Aggiorna Scorta Materia Prima" tabindex="0">Carica/Aggiorna Scorta</button>
+                    <button class="btn btn-danger" id="cancelRawMaterialBtn" onclick="cancelEdit('rawMaterials')" style="display:none;" aria-label="Annulla operazione materia prima" tabindex="0">Annulla</button>
+                </div>
+                <div class="card">
+                    <h3>Scorte Attuali Materie Prime</h3>
+                    <table class="table" role="table" aria-label="Tabella Scorte Attuali Materie Prime">
+                        <thead>
+                            <tr>
+                                <th scope="col">Materia Prima</th>
+                                <th scope="col">Scorta Attuale</th>
+                                <th scope="col">Unità</th>
+                                <th scope="col">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rawMaterialsStockTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3>Giornale di Magazzino</h3>
+            <table class="table" role="table" aria-label="Tabella Giornale di Magazzino">
+                <thead>
+                    <tr>
+                        <th scope="col">Data</th>
+                        <th scope="col">Materia Prima</th>
+                        <th scope="col">Tipo Movimento</th>
+                        <th scope="col">Quantità</th>
+                        <th scope="col">Stato</th>
+                        <th scope="col">Riferimento Ordine</th>
+                        <th scope="col">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="warehouseJournalTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Pagina Articoli -->
+        <div id="articles" class="page" role="region" aria-labelledby="articles-heading">
+            <h2 id="articles-heading">👕 Gestione Articoli</h2>
+            <div class="form-group">
+                <label for="articleId">Articolo (Modifica esistente o Aggiungi nuovo)</label>
+                <select id="articleId" onchange="loadArticleForEdit()" aria-label="Seleziona articolo per modifica o aggiungine uno nuovo" tabindex="0">
+                    <option value="new">-- Nuovo Articolo --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="articleCode">Codice Articolo</label>
+                <input type="text" id="articleCode" placeholder="MAG001" aria-label="Codice articolo" tabindex="0">
+            </div>
+            <div class="form-group">
+                <label for="articleDescription">Descrizione Articolo</label>
+                <input type="text" id="articleDescription" placeholder="Maglione in lana merino" aria-label="Descrizione articolo" tabindex="0">
+            </div>
+            <div class="form-group">
+                <label for="articleColor">Colore</label>
+                <input type="text" id="articleColor" placeholder="Blu navy" aria-label="Colore articolo" tabindex="0">
+            </div>
+            <div class="form-group">
+                <label for="articleClient">Cliente</label>
+                <input type="text" id="articleClient" placeholder="Brand Fashion SRL" aria-label="Cliente dell'articolo" tabindex="0">
+            </div>
+            
+            <div class="cycle-builder" role="group" aria-labelledby="cycle-builder-heading">
+                <h3 id="cycle-builder-heading">Ciclo di Lavorazione</h3>
+                <div id="cycleSteps"></div>
+                <button class="btn" onclick="addCycleStep()" aria-label="Aggiungi una fase al ciclo di lavorazione" tabindex="0">Aggiungi Fase al Ciclo</button>
+            </div>
+
+            <div class="bom-builder" role="group" aria-labelledby="bom-builder-heading">
+                <h3 id="bom-builder-heading">Distinta Base (BOM)</h3>
+                <div id="bomItems"></div>
+                <button class="btn" onclick="addBomItem()" aria-label="Aggiungi una materia prima alla distinta base" tabindex="0">Aggiungi Materia Prima al BOM</button>
+            </div>
+            
+            <button class="btn btn-success" id="saveArticleBtn" onclick="saveArticle()" aria-label="Salva o Modifica Articolo" tabindex="0">Salva Articolo</button>
+            <button class="btn btn-danger" id="cancelArticleBtn" onclick="cancelEdit('articles')" style="display:none;" aria-label="Annulla modifica articolo" tabindex="0">Annulla</button>
+            
+            <table class="table" role="table" aria-label="Tabella Articoli">
+                <thead>
+                    <tr>
+                        <th scope="col">Codice</th>
+                        <th scope="col">Descrizione</th>
+                        <th scope="col">Colore</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">Fasi</th>
+                        <th scope="col">Distinta Base</th>
+                        <th scope="col">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="articlesTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Pagina Pianificazione -->
+        <div id="planning" class="page" role="region" aria-labelledby="planning-heading">
+            <h2 id="planning-heading">📅 Pianificazione Produzione</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="form-group">
+                        <label for="planningLotId">Lotto (Modifica esistente o Nuovo lotto)</label>
+                        <select id="planningLotId" onchange="loadPlanningForEdit()" aria-label="Seleziona lotto di pianificazione per modifica o creane uno nuovo" tabindex="0">
+                            <option value="new">-- Nuovo Lotto --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planningArticle">Articolo</label>
+                        <select id="planningArticle" aria-label="Seleziona l'articolo per la pianificazione" tabindex="0">
+                            <option value="">Seleziona articolo...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planningQuantity">Quantità da Produrre</label>
+                        <input type="number" id="planningQuantity" placeholder="100" min="1" aria-label="Quantità da produrre" tabindex="0">
+                    </div>
+                     <div class="form-group">
+                        <label for="planningType">Tipo Pianificazione</label>
+                        <select id="planningType" aria-label="Tipo di pianificazione" tabindex="0">
+                            <option value="production">Produzione</option>
+                            <option value="sampling">Campionatura</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planningPriority">Priorità</label>
+                        <select id="planningPriority" aria-label="Priorità della pianificazione" tabindex="0">
+                            <option value="high">Alta</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="low">Bassa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planningNotes">Note</label>
+                        <textarea id="planningNotes" placeholder="Note aggiuntive..." aria-label="Note aggiuntive sulla pianificazione" tabindex="0"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="planningStartDate">Data Inizio (se diversa da oggi)</label>
+                        <input type="date" id="planningStartDate" aria-label="Data di inizio pianificazione" tabindex="0">
+                    </div>
+                    <button class="btn" onclick="calculateDelivery()" aria-label="Calcola data di consegna stimata" tabindex="0">Calcola Consegna</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Risultato Pianificazione</h3>
+                    <div id="deliveryResult" aria-live="polite" aria-atomic="true">
+                        <p>Seleziona un articolo e una quantità per calcolare la data di consegna stimata.</p>
+                    </div>
+                    <button class="btn btn-success" id="savePlanningBtn" onclick="savePlanning()" aria-label="Salva Pianificazione" tabindex="0">Salva Pianificazione</button>
+                    <button class="btn btn-danger" id="cancelPlanningBtn" onclick="cancelEdit('planning')" style="display:none;" aria-label="Annulla pianificazione" tabindex="0">Annulla</button>
+                </div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+
+            <!-- Importa Piani (JSON) -->
+            <div class="card">
+                <h3>Importa Piani di Produzione (JSON)</h3>
+                <div class="form-group">
+                    <label for="jsonImportArea">Incolla qui l'array di piani in formato JSON:</label>
+                    <textarea id="jsonImportArea" rows="10" placeholder='[
+    {
+        "articleId": 1001,
+        "quantity": 150,
+        "priority": "medium",
+        "notes": "Ordine Gennaio",
+        "startDate": "2025-07-01",
+        "type": "production"
+    },
+    {
+        "articleId": 1003,
+        "quantity": 300,
+        "priority": "low",
+        "notes": "Sconto Estivo",
+        "startDate": "2025-07-08",
+        "type": "sampling"
+    }
+]' aria-label="Area di testo per incollare i piani di produzione in formato JSON" tabindex="0"></textarea>
+                </div>
+                <button class="btn" onclick="importPlansFromJson()" aria-label="Importa piani da JSON" tabindex="0">Importa da JSON</button>
+            </div>
+        </div>
+
+        <!-- Pagina Programma -->
+        <div id="schedule" class="page" role="region" aria-labelledby="schedule-heading">
+            <h2 id="schedule-heading">📋 Programma Settimanale</h2>
+
+            <!-- Calendario Consegne -->
+            <div id="deliveryCalendarView" role="region" aria-labelledby="delivery-calendar-heading">
+                <h3 id="delivery-calendar-heading">Consegne Previste</h3>
+                <div class="week-view-controls">
+                    <button class="btn" onclick="navigateDeliveryWeek(-7)" aria-label="Settimana precedente" tabindex="0">&larr; Settimana Precedente</button>
+                    <span id="currentDeliveryWeekRange" aria-live="polite" aria-atomic="true"></span>
+                    <button class="btn" onclick="navigateDeliveryWeek(7)" aria-label="Settimana successiva" tabindex="0">Settimana Successiva &rarr;</button>
+                </div>
+                <div class="week-grid" id="deliverySchedule" role="grid" aria-label="Calendario consegne previste"></div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+
+            <!-- Calendario Carico di Lavoro Giornaliero -->
+            <div id="dailyWorkloadCalendarView" role="region" aria-labelledby="workload-calendar-heading">
+                <h3 id="workload-calendar-heading">Carico di Lavoro Giornaliero per Reparto</h3>
+                <div class="week-view-controls">
+                    <button class="btn" onclick="navigateWorkloadWeek(-7)" aria-label="Settimana precedente carico di lavoro" tabindex="0">&larr; Settimana Precedente</button>
+                    <span id="currentWorkloadWeekRange" aria-live="polite" aria-atomic="true"></span>
+                    <button class="btn" onclick="navigateWorkloadWeek(7)" aria-label="Settimana successiva carico di lavoro" tabindex="0">Settimana Successiva &rarr;</button>
+                </div>
+                <div class="week-grid" id="dailyWorkloadCalendar" role="grid" aria-label="Calendario carico di lavoro giornaliero per reparto"></div>
+            </div>
+            
+            <h3>Lotti in Pianificazione</h3>
+            <div id="planningList" role="list" aria-label="Lotti in pianificazione"></div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="page" role="region" aria-labelledby="dashboard-heading">
+            <h2 id="dashboard-heading">📊 Dashboard</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Statistiche Generali</h3>
+                    <div id="generalStats" aria-live="polite" aria-atomic="true">
+                        <p>Nessun dato disponibile. Aggiungi fasi, macchinari e articoli per visualizzare le statistiche.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Utilizzo Macchinari</h3>
+                    <div id="machineStats" aria-live="polite" aria-atomic="true">
+                        <p>Nessun macchinario aggiunto o dati di utilizzo.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Prossime Consegne</h3>
+                    <div id="upcomingDeliveries" aria-live="polite" aria-atomic="true">
+                        <p>Nessuna consegna pianificata.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Carico di Lavoro</h3>
+                    <div id="workloadChart" aria-live="polite" aria-atomic="true">
+                        <p>Nessun carico di lavoro da visualizzare.</p>
+                    </div>
+                </div>
+
+                <!-- Nuova sezione per Backup/Ripristino -->
+                <div class="card">
+                    <h3>Backup & Ripristino Dati</h3>
+                    <p>Esporta o importa tutti i dati dell'applicazione come file JSON.</p>
+                    <button class="btn" onclick="exportDataAsJson()" aria-label="Esporta tutti i dati come file JSON" tabindex="0">Esporta Dati</button>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="importDataFile">Importa Dati da File JSON:</label>
+                        <input type="file" id="importDataFile" accept=".json" aria-label="Seleziona file JSON per importare dati" tabindex="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Modal per Quantità Effettiva Consumata -->
+    <div id="actualConsumptionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="consumption-modal-title">
+        <div class="modal-content">
+            <h4 id="consumption-modal-title">Registra Consumo Effettivo</h4>
+            <p id="modalRmInfo" aria-live="polite" aria-atomic="true"></p>
+            <div class="form-group">
+                <label for="actualConsumedQuantity">Quantità Effettiva Consumata:</label>
+                <input type="number" id="actualConsumedQuantity" step="0.01" min="0" aria-label="Quantità effettiva consumata" tabindex="0">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-success" id="confirmActualConsumptionBtn" aria-label="Conferma consumo effettivo" tabindex="0">Conferma</button>
+                <button class="btn btn-danger" id="cancelActualConsumptionBtn" aria-label="Annulla registrazione consumo" tabindex="0">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per Modifica Lotto di Pianificazione -->
+    <div id="editPlanningModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="edit-planning-modal-title">
+        <div class="modal-content">
+            <h4 id="edit-planning-modal-title">Modifica Lotto di Pianificazione</h4>
+            <input type="hidden" id="editPlanningLotId">
+            <div class="form-group">
+                <label for="editPlanningArticle">Articolo</label>
+                <select id="editPlanningArticle" disabled aria-label="Articolo del lotto (disabilitato per modifica)" tabindex="-1"> <!-- Article cannot be changed once planned -->
+                    <option value="">Seleziona articolo...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editPlanningQuantity">Quantità da Produrre</label>
+                <input type="number" id="editPlanningQuantity" placeholder="100" min="1" aria-label="Nuova quantità da produrre" tabindex="0">
+            </div>
+            <div class="form-group">
+                <label for="editPlanningType">Tipo Pianificazione</label>
+                <select id="editPlanningType" aria-label="Nuovo tipo di pianificazione" tabindex="0">
+                    <option value="production">Produzione</option>
+                    <option value="sampling">Campionatura</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editPlanningPriority">Priorità</label>
+                <select id="editPlanningPriority" aria-label="Nuova priorità" tabindex="0">
+                    <option value="high">Alta</option>
+                    <option value="medium">Media</option>
+                    <option value="low">Bassa</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editPlanningNotes">Note</label>
+                <textarea id="editPlanningNotes" placeholder="Note aggiuntive..." aria-label="Note aggiuntive" tabindex="0"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editPlanningStartDate">Nuova Data Inizio</label>
+                <input type="date" id="editPlanningStartDate" aria-label="Nuova data di inizio" tabindex="0">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-success" id="saveEditedPlanningBtn" aria-label="Salva modifiche al lotto di pianificazione" tabindex="0">Salva Modifiche</button>
+                <button class="btn btn-danger" id="cancelEditPlanningBtn" aria-label="Annulla modifiche al lotto di pianificazione" tabindex="0">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per Notifiche -->
+    <div id="notificationsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="notifications-modal-title">
+        <div class="modal-content">
+            <h4 id="notifications-modal-title">Archivio Notifiche</h4>
+            <div class="notification-filter-buttons">
+                <button id="filterUnread" class="active" onclick="filterNotifications('unread')" aria-label="Mostra solo notifiche non lette" tabindex="0">Non Letti</button>
+                <button id="filterAll" onclick="filterNotifications('all')" aria-label="Mostra tutte le notifiche" tabindex="0">Tutti</button>
+            </div>
+            <div id="notificationsList" role="log" aria-live="polite" aria-atomic="false">
+                <p style="text-align: center; color: #888;">Nessun messaggio.</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" onclick="closeNotificationsModal()" aria-label="Chiudi archivio notifiche" tabindex="0">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collegamento al file JavaScript esterno -->
+    <script src="app.js"></script>
+</body>
+</html>
