@@ -67,23 +67,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 logoutUser(false); // Logout without showing "Logged out" message
                 if (loginOverlay) loginOverlay.classList.add('show');
                 if (appContent) appContent.style.display = 'none';
-                // Call initializeLoginElements with a delay to ensure DOM is ready
-                setTimeout(initializeLoginElements, 100); 
+                // Call initializeLoginElements with a delay and retry mechanism
+                initializeLoginElements(); 
             }
         } catch (e) {
             console.error("Errore nel parsing dell'utente salvato:", e);
             logoutUser(false); // Logout if saved user data is corrupted
             if (loginOverlay) loginOverlay.classList.add('show');
             if (appContent) appContent.style.display = 'none';
-            // Call initializeLoginElements with a delay to ensure DOM is ready
-            setTimeout(initializeLoginElements, 100);
+            // Call initializeLoginElements with a delay and retry mechanism
+            initializeLoginElements();
         }
     } else {
         if (loginOverlay) loginOverlay.classList.add('show');
         if (appContent) appContent.style.display = 'none';
         console.log("Nessun utente salvato, mostrando overlay di login.");
-        // Call initializeLoginElements with a delay to ensure DOM is ready
-        setTimeout(initializeLoginElements, 100); 
+        // Call initializeLoginElements with a delay and retry mechanism
+        initializeLoginElements(); 
     }
 
     // Set up barcode input listener
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (rawMaterialBarcode) { // Ensure element exists before adding listener
         rawMaterialBarcode.addEventListener('keyup', handleBarcodeInput);
     } else {
-        console.warn("Elemento 'rawMaterialBarcode' non trovato, impossibile aggiungere listener.");
+        console.warn("DOMContentLoaded: Elemento 'rawMaterialBarcode' non trovato, impossibile aggiungere listener.");
     }
 
     // Event listeners for the actual consumption modal
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirmActualConsumptionBtn) {
         confirmActualConsumptionBtn.addEventListener('click', confirmActualConsumption);
     } else {
-        console.warn("Elemento 'confirmActualConsumptionBtn' non trovato.");
+        console.warn("DOMContentLoaded: Elemento 'confirmActualConsumptionBtn' non trovato.");
     }
 
     const cancelActualConsumptionBtn = document.getElementById('cancelActualConsumptionBtn');
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentModalJournalEntryId = null; // Clear the stored ID
         });
     } else {
-        console.warn("Elemento 'cancelActualConsumptionBtn' non trovato.");
+        console.warn("DOMContentLoaded: Elemento 'cancelActualConsumptionBtn' non trovato.");
     }
 
     // Event listeners for the edit planning modal
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (saveEditedPlanningBtn) {
         saveEditedPlanningBtn.addEventListener('click', saveEditedPlanning);
     } else {
-        console.warn("Elemento 'saveEditedPlanningBtn' non trovato.");
+        console.warn("DOMContentLoaded: Elemento 'saveEditedPlanningBtn' non trovato.");
     }
 
     const cancelEditPlanningBtn = document.getElementById('cancelEditPlanningBtn');
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentCalculatedPlanningDetails = null; // Clear calculated details
         });
     } else {
-        console.warn("Elemento 'cancelEditPlanningBtn' non trovato.");
+        console.warn("DOMContentLoaded: Elemento 'cancelEditPlanningBtn' non trovato.");
     }
 
 
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (importDataFile) {
         importDataFile.addEventListener('change', importDataFromJson);
     } else {
-        console.warn("Elemento 'importDataFile' non trovato.");
+        console.warn("DOMContentLoaded: Elemento 'importDataFile' non trovato.");
     }
 
     // Event listener to close the menu if clicking outside
@@ -158,36 +158,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /**
  * Initializes event listeners for login form elements.
- * This function should be called ONLY when the login overlay is about to be shown,
- * ensuring the elements are available in the DOM.
+ * This function uses a retry mechanism to ensure elements are available in the DOM.
  */
-function initializeLoginElements() {
+function initializeLoginElements(retries = 10, delay = 100) {
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput');
     const loginButton = document.getElementById('loginButton');
 
-    // Remove existing listeners to prevent multiple bindings if called multiple times
-    if (usernameInput) {
+    if (usernameInput && passwordInput && loginButton) {
+        // Elements found, add listeners
         usernameInput.removeEventListener('keypress', handleLoginKeypress);
         usernameInput.addEventListener('keypress', handleLoginKeypress);
-    } else {
-        console.warn("initializeLoginElements: Elemento 'usernameInput' non trovato.");
-    }
 
-    if (passwordInput) {
         passwordInput.removeEventListener('keypress', handleLoginKeypress);
         passwordInput.addEventListener('keypress', handleLoginKeypress);
-    } else {
-        console.warn("initializeLoginElements: Elemento 'passwordInput' non trovato.");
-    }
 
-    if (loginButton) {
         loginButton.removeEventListener('click', loginUser);
         loginButton.addEventListener('click', loginUser);
+        console.log("initializeLoginElements: Listener di login inizializzati.");
+    } else if (retries > 0) {
+        // Elements not found, retry after a delay
+        console.warn(`initializeLoginElements: Elementi login non trovati (tentativi rimanenti: ${retries}). Riprovo in ${delay}ms.`);
+        setTimeout(() => initializeLoginElements(retries - 1, delay), delay);
     } else {
-        console.warn("initializeLoginElements: Elemento 'loginButton' non trovato.");
+        // Max retries reached, log final warning
+        console.error("initializeLoginElements: Impossibile trovare gli elementi 'usernameInput', 'passwordInput' o 'loginButton' dopo numerosi tentativi. Assicurati che l'HTML sia caricato correttamente.");
+        showNotification("Errore critico: I campi di login non sono disponibili. Per favore, ricarica la pagina.", "error");
     }
-    console.log("initializeLoginElements: Listener di login inizializzati.");
 }
 
 /**
@@ -2753,7 +2750,7 @@ function updatePlanningList() {
         const article = appData.articles.find(a => a.id === plan.articleId);
         const articleInfo = article ? `${article.code} - ${article.description}` : 'Articolo Sconosciuto';
         const formattedStartDate = new Date(plan.startDate).toLocaleDateString('it-IT');
-        const formattedDeliveryDate = new Date(plan.estimatedDeliveryDate).toLocaleDate('it-IT'); // Changed from ToLocaleDateString
+        const formattedDeliveryDate = new Date(plan.estimatedDeliveryDate).toLocaleDateString('it-IT'); 
         const priorityClass = `priority-${plan.priority}`;
         const typeClass = `plan-type-${plan.type || 'production'}`; // Apply type class
 
@@ -3481,7 +3478,7 @@ function loginUser() {
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput'); // New: get password input
     if (!usernameInput || !passwordInput) { // Add null checks
-        console.error("loginUser: Elementi username/password input non trovati.");
+        console.error("loginUser: Elementi username/password input non trovati. Impossibile procedere con il login.");
         showNotification("Errore: Impossibile trovare i campi di login.", "error");
         return;
     }
@@ -3545,7 +3542,7 @@ function logoutUser(showMessage = true) {
     }
     updateNavMenuVisibility(); // Update nav menu visibility after logout (hide admin buttons)
     // Re-initialize login elements after logout, as the overlay is now visible
-    setTimeout(initializeLoginElements, 100); 
+    initializeLoginElements(); 
     console.log("logoutUser: Logout completato.");
 }
 
@@ -3755,4 +3752,5 @@ function forcePasswordChangeOnNextLogin(userId) {
     } else if (!user) {
         showNotification('Utente non trovato per l\'impostazione del cambio password forzato.', 'error');
     }
+}
 }
