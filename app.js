@@ -3753,4 +3753,3 @@ function forcePasswordChangeOnNextLogin(userId) {
         showNotification('Utente non trovato per l\'impostazione del cambio password forzato.', 'error');
     }
 }
-}
