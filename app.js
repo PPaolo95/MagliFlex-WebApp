@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load and initialize app data, including users
     loadAndInitializeAppData();
 
+    // Setup listeners for login elements
+    setupLoginListeners();
+
     // Check for existing login
     const savedUserString = localStorage.getItem('magliflex-currentUser');
     if (savedUserString) {
@@ -51,8 +54,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Verify if the user still exists in the loaded appData.users
             const userExists = appData.users.some(u => u.username === currentUser.username);
             if (userExists) {
-                document.getElementById('loginOverlay').classList.remove('show');
-                document.getElementById('appContent').style.display = 'flex'; // Changed to flex for proper layout
+                const loginOverlay = document.getElementById('loginOverlay');
+                const appContent = document.getElementById('appContent');
+                if (loginOverlay) loginOverlay.classList.remove('show');
+                if (appContent) appContent.style.display = 'flex'; // Changed to flex for proper layout
                 showNotification(`Bentornato, ${currentUser.username}!`, 'info');
                 markWelcomeNotificationsAsRead(); // Mark specific notifications as read on load
                 updateAllTables(); // Refresh UI including dashboard menu item visibility
@@ -68,8 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
             logoutUser(false); // Logout if saved user data is corrupted
         }
     } else {
-        document.getElementById('loginOverlay').classList.add('show');
-        document.getElementById('appContent').style.display = 'none';
+        const loginOverlay = document.getElementById('loginOverlay');
+        const appContent = document.getElementById('appContent');
+        if (loginOverlay) loginOverlay.classList.add('show');
+        if (appContent) appContent.style.display = 'none';
         console.log("Nessun utente salvato, mostrando overlay di login.");
     }
 
@@ -129,31 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn("Elemento 'importDataFile' non trovato.");
     }
 
-    // Event listener for username input to allow Enter key for login
-    const usernameInput = document.getElementById('usernameInput');
-    if (usernameInput) {
-        usernameInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                loginUser();
-            }
-        });
-    } else {
-        console.warn("Elemento 'usernameInput' non trovato.");
-    }
-
-    // Event listener for password input in login overlay
-    const passwordInput = document.getElementById('passwordInput');
-    if (passwordInput) {
-        passwordInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                loginUser();
-            }
-        });
-    } else {
-        console.warn("Elemento 'passwordInput' non trovato.");
-    }
-
-
     // Event listener to close the menu if clicking outside
     document.addEventListener('click', function(event) {
         const mainNavMenu = document.getElementById('mainNavMenu');
@@ -167,6 +149,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("DOMContentLoaded: Fine inizializzazione listener.");
 });
+
+/**
+ * Sets up event listeners for login form elements.
+ * Called after DOMContentLoaded to ensure elements are present.
+ */
+function setupLoginListeners() {
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginButton = document.getElementById('loginButton'); // Assuming you have a login button with this ID
+
+    if (usernameInput) {
+        usernameInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loginUser();
+            }
+        });
+    } else {
+        console.warn("Elemento 'usernameInput' non trovato per i listener di login.");
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loginUser();
+            }
+        });
+    } else {
+        console.warn("Elemento 'passwordInput' non trovato per i listener di login.");
+    }
+
+    if (loginButton) {
+        loginButton.addEventListener('click', loginUser);
+    } else {
+        console.warn("Elemento 'loginButton' non trovato.");
+    }
+}
+
 
 /**
  * Carica i dati dell'applicazione da localStorage o usa i valori predefiniti.
@@ -745,7 +764,7 @@ function updateNotificationBadge() {
 }
 
 /**
- * Apre il modale delle notifiche.
+ * Opens the modal delle notifiche.
  */
 function openNotificationsModal() {
     const modal = document.getElementById('notificationsModal');
@@ -3458,7 +3477,7 @@ function loginUser() {
     const password = passwordInput.value; // Get plain text password
 
     if (!username || !password) {
-        showNotification('Per favor e, inserisci nome utente e password.', 'warning');
+        showNotification('Per favore, inserisci nome utente e password.', 'warning');
         return;
     }
 
@@ -3722,3 +3741,4 @@ function forcePasswordChangeOnNextLogin(userId) {
         showNotification('Utente non trovato per l\'impostazione del cambio password forzato.', 'error');
     }
 }
+
