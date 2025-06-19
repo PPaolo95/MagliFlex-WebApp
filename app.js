@@ -38,6 +38,8 @@ let currentNotificationFilter = 'unread';
 
 // Inizializzazione: Carica i dati salvati e aggiorna l'UI quando il DOM è pronto
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOMContentLoaded: Inizio caricamento app.");
+
     // Load and initialize app data, including users
     loadAndInitializeAppData();
 
@@ -50,12 +52,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const userExists = appData.users.some(u => u.username === currentUser.username);
             if (userExists) {
                 document.getElementById('loginOverlay').classList.remove('show');
-                document.getElementById('appContent').style.display = 'block';
+                document.getElementById('appContent').style.display = 'flex'; // Changed to flex for proper layout
                 showNotification(`Bentornato, ${currentUser.username}!`, 'info');
                 markWelcomeNotificationsAsRead(); // Mark specific notifications as read on load
                 updateAllTables(); // Refresh UI including dashboard menu item visibility
+                showPage('dashboard'); // Show default page after successful re-login
+                console.log("Utente ri-loggato con successo:", currentUser.username);
             } else {
                 // User from localStorage no longer exists in appData (e.g., reset data)
+                console.log("Utente salvato non più esistente. Effettuato logout.");
                 logoutUser(false); // Logout without showing "Logged out" message
             }
         } catch (e) {
@@ -65,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         document.getElementById('loginOverlay').classList.add('show');
         document.getElementById('appContent').style.display = 'none';
+        console.log("Nessun utente salvato, mostrando overlay di login.");
     }
 
     // Set up barcode input listener
@@ -110,6 +116,8 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleNavMenu(); // Close the menu if click is outside of it or the hamburger button
         }
     });
+
+    console.log("DOMContentLoaded: Fine inizializzazione listener.");
 });
 
 /**
@@ -117,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
  * Questa funzione viene chiamata all'avvio dell'app.
  */
 function loadAndInitializeAppData() {
+    console.log("loadAndInitializeAppData: Caricamento dati da localStorage.");
     const saved = localStorage.getItem('magliflex-data');
     if (saved) {
         try {
@@ -148,25 +157,31 @@ function loadAndInitializeAppData() {
 
             // If no articles/plans/raw materials (meaning, maybe a fresh install or data cleared), add example data
             if (appData.articles.length === 0 && appData.productionPlan.length === 0 && appData.rawMaterials.length === 0) {
+                console.log("Dati anagrafici e di pianificazione vuoti, aggiungo dati di esempio.");
                 addExampleData();
             } else {
+                console.log("Dati esistenti trovati, assicurando anagrafiche iniziali.");
                 ensureInitialAnagraphics(); // Ensure core anagraphics are always present and merged
             }
+            console.log("Dati caricati e inizializzati da localStorage.", appData);
         } catch (e) {
             console.error('Errore nel caricamento dati dal localStorage:', e);
             showNotification('Errore nel caricamento dei dati salvati. Dati potrebbero essere corrotti. Vengono usati i dati predefiniti e di esempio.', 'error');
             resetAppDataToDefaultsAndAddExamples();
         }
     } else {
+        console.log("Nessun dato salvato trovato in localStorage. Vengono usati i dati predefiniti e di esempio.");
         showNotification('Nessun dato salvato trovato. Vengono usati i dati predefiniti e di esempio. Inizia a inserire le tue informazioni.', 'info');
         resetAppDataToDefaultsAndAddExamples();
     }
     
+    // Update all tables and UI elements after data is loaded (this is critical)
     updateAllTables();
     document.getElementById('rawMaterialLoadDate').valueAsDate = new Date();
     document.getElementById('planningStartDate').valueAsDate = new Date();
     // Do NOT show a page yet, wait for login to show content
     // showPage('phases'); 
+    console.log("loadAndInitializeAppData: UI aggiornata dopo il caricamento dati.");
 }
 
 /**
@@ -198,6 +213,7 @@ function ensureInitialAnagraphics() {
     // New: Ensure initial users are always present
     appData.users = mergeData(getInitialUsers(), appData.users);
     saveData();
+    console.log("ensureInitialAnagraphics: Anagrafiche iniziali assicurate e dati salvati.");
 }
 
 
@@ -297,12 +313,14 @@ function resetAppDataToDefaultsAndAddExamples() {
     appData.rawMaterials.forEach(rm => addJournalEntry(rm.id, 'Carico', rm.currentStock, null, false, null, new Date().toISOString()));
 
     addExampleData();
+    console.log("resetAppDataToDefaultsAndAddExamples: Dati app resettati ai valori predefiniti con esempi.");
 }
 
 /**
  * Aggiunge dati di esempio (articoli e pianificazioni) se l'app è vuota.
  */
 function addExampleData() {
+    console.log("addExampleData: Aggiungendo dati di esempio...");
     // Define example articles (using fixed IDs for consistency)
     const exampleArticles = [
         {
@@ -395,6 +413,7 @@ function addExampleData() {
     });
 
     saveData(); 
+    console.log("addExampleData: Dati di esempio aggiunti e salvati.");
 }
 
 
@@ -440,7 +459,9 @@ function getStartOfWeek(date) {
 function saveData() {
     try {
         localStorage.setItem('magliflex-data', JSON.stringify(appData));
-    } catch (e) {
+        console.log("Dati salvati in localStorage.");
+    }
+    catch (e) {
         console.error('Errore nel salvataggio dati nel localStorage:', e);
         showNotification('Errore nel salvataggio dei dati. Spazio insufficiente o errore browser.', 'error');
     }
@@ -450,6 +471,7 @@ function saveData() {
  * Aggiorna tutte le tabelle e le liste nell'interfaccia utente.
  */
 function updateAllTables() {
+    console.log("updateAllTables: Aggiornamento di tutte le tabelle e UI.");
     updatePhasesTable();
     updateMachinesTable();
     updateDepartmentsTable();
@@ -468,6 +490,7 @@ function updateAllTables() {
     updateNotificationBadge(); // Update badge on every UI refresh
     updateNavMenuVisibility(); // New: update navigation menu items visibility based on user roles
     updateUsersTable(); // New: Update users table if user management page exists
+    console.log("updateAllTables: Tutte le tabelle e UI aggiornate.");
 }
 
 /**
@@ -476,15 +499,18 @@ function updateAllTables() {
  * @param {string} pageId L'ID della pagina da mostrare.
  */
 function showPage(pageId) {
+    console.log(`showPage: Tentativo di mostrare la pagina "${pageId}".`);
     // Only proceed if a user is logged in
     if (!currentUser) {
         showNotification('Devi effettuare il login per accedere alle pagine.', 'warning');
+        console.warn(`showPage: Accesso negato a "${pageId}", nessun utente loggato.`);
         return;
     }
 
     // New: Check user permissions for specific pages
     if (pageId === 'users' && (!currentUser.roles || !currentUser.roles.includes('admin'))) {
         showNotification('Non hai i permessi per accedere a questa pagina. Richiede il ruolo di Amministratore.', 'error');
+        console.warn(`showPage: Accesso negato a "${pageId}", utente ${currentUser.username} non è amministratore.`);
         return;
     }
 
@@ -502,8 +528,9 @@ function showPage(pageId) {
         if (activeNavBtn) {
             activeNavBtn.classList.add('active');
         }
+        console.log(`showPage: Pagina "${pageId}" mostrata correttamente.`);
     } else {
-        console.warn(`Pagina con ID "${pageId}" non trovata.`);
+        console.error(`showPage: Pagina con ID "${pageId}" non trovata.`);
         showNotification(`Errore: pagina "${pageId}" non trovata.`, 'error');
         return; // Stop execution if page doesn't exist
     }
@@ -514,6 +541,7 @@ function showPage(pageId) {
     if (mainNavMenu.classList.contains('open')) {
         mainNavMenu.classList.remove('open');
         hamburgerBtn.classList.remove('open');
+        console.log("showPage: Menu di navigazione chiuso.");
     }
 
     // Aggiorna le sezioni specifiche quando si naviga alla pagina
@@ -567,16 +595,23 @@ function showPage(pageId) {
  */
 function updateNavMenuVisibility() {
     const navMenu = document.getElementById('mainNavMenu');
-    if (!navMenu) return; // Exit if menu not found (e.g. before DOMContentLoaded)
+    if (!navMenu) {
+        console.warn("updateNavMenuVisibility: Menu di navigazione non trovato.");
+        return;
+    }
 
     // Example: Hide 'users' button if not admin
     const usersBtn = navMenu.querySelector('button[onclick="showPage(\'users\')"]');
     if (usersBtn) {
         if (currentUser && currentUser.roles && currentUser.roles.includes('admin')) {
-            usersBtn.style.display = 'block'; // Or 'flex', 'inline-block' based on layout
+            usersBtn.style.display = 'flex'; // Or 'block', 'inline-block' based on layout
+            console.log("updateNavMenuVisibility: Bottone 'Gestione Utenti' mostrato (Admin).");
         } else {
             usersBtn.style.display = 'none';
+            console.log("updateNavMenuVisibility: Bottone 'Gestione Utenti' nascosto (Non Admin).");
         }
+    } else {
+        console.warn("updateNavMenuVisibility: Bottone 'Gestione Utenti' non trovato nell'HTML.");
     }
     // Add other permission-based visibility logic here if needed
 }
@@ -589,6 +624,7 @@ function toggleNavMenu() {
     const hamburgerBtn = document.querySelector('.hamburger-btn');
     mainNavMenu.classList.toggle('open');
     hamburgerBtn.classList.toggle('open');
+    console.log("toggleNavMenu: Menu di navigazione aperto/chiuso.");
 }
 
 
@@ -609,12 +645,14 @@ function showNotification(message, type = 'info') {
     appData.notifications.push(newNotification);
     saveData();
     updateNotificationBadge();
+    console.log(`Notifica: [${type}] ${message}`);
 }
 
 /**
  * Marca automaticamente come letti i messaggi di "Benvenuto" e "Bentornato".
  */
 function markWelcomeNotificationsAsRead() {
+    console.log("markWelcomeNotificationsAsRead: Tentativo di marcare le notifiche di benvenuto come lette.");
     const messagesToMark = ['Benvenuto,', 'Bentornato,'];
     let changed = false;
     appData.notifications.forEach(n => {
@@ -626,7 +664,10 @@ function markWelcomeNotificationsAsRead() {
     if (changed) {
         saveData();
         updateNotificationBadge();
-        renderNotifications(); // Re-render if modal is open
+        // renderNotifications(); // Re-render if modal is open - only if modal is already open
+        console.log("markWelcomeNotificationsAsRead: Notifiche di benvenuto marcate come lette.");
+    } else {
+        console.log("markWelcomeNotificationsAsRead: Nessuna notifica di benvenuto da marcare.");
     }
 }
 
@@ -637,11 +678,15 @@ function markWelcomeNotificationsAsRead() {
 function updateNotificationBadge() {
     const unreadCount = appData.notifications.filter(n => !n.isRead).length;
     const badge = document.getElementById('notificationBadge');
-    if (unreadCount > 0) {
-        badge.textContent = unreadCount;
-        badge.style.display = 'block';
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
     } else {
-        badge.style.display = 'none';
+        console.warn("updateNotificationBadge: Elemento 'notificationBadge' non trovato.");
     }
 }
 
@@ -649,15 +694,25 @@ function updateNotificationBadge() {
  * Apre il modale delle notifiche.
  */
 function openNotificationsModal() {
-    document.getElementById('notificationsModal').classList.add('show');
-    renderNotifications();
+    const modal = document.getElementById('notificationsModal');
+    if (modal) {
+        modal.classList.add('show');
+        renderNotifications();
+        console.log("openNotificationsModal: Modale notifiche aperto.");
+    } else {
+        console.error("openNotificationsModal: Modale notifiche non trovato.");
+    }
 }
 
 /**
  * Chiude il modale delle notifiche.
  */
 function closeNotificationsModal() {
-    document.getElementById('notificationsModal').classList.remove('show');
+    const modal = document.getElementById('notificationsModal');
+    if (modal) {
+        modal.classList.remove('show');
+        console.log("closeNotificationsModal: Modale notifiche chiuso.");
+    }
 }
 
 /**
@@ -670,6 +725,7 @@ function filterNotifications(filter) {
     document.getElementById('filterAll').classList.remove('active');
     document.getElementById(`filter${capitalizeFirstLetter(filter)}`).classList.add('active');
     renderNotifications();
+    console.log(`filterNotifications: Filtro impostato su "${filter}".`);
 }
 
 /**
@@ -677,6 +733,10 @@ function filterNotifications(filter) {
  */
 function renderNotifications() {
     const listDiv = document.getElementById('notificationsList');
+    if (!listDiv) {
+        console.error("renderNotifications: Elemento 'notificationsList' non trovato.");
+        return;
+    }
     listDiv.innerHTML = '';
 
     const filteredNotifications = appData.notifications
@@ -700,6 +760,7 @@ function renderNotifications() {
         `;
         listDiv.appendChild(itemDiv);
     });
+    console.log(`renderNotifications: Renderizzate ${filteredNotifications.length} notifiche.`);
 }
 
 /**
@@ -713,6 +774,9 @@ function markNotificationRead(id) {
         saveData();
         renderNotifications(); // Re-render to update the list
         updateNotificationBadge(); // Update the badge
+        console.log(`markNotificationRead: Notifica ${id} marcata come letta.`);
+    } else {
+        console.warn(`markNotificationRead: Notifica con ID ${id} non trovata.`);
     }
 }
 
@@ -727,8 +791,16 @@ function cancelEdit(entityType) {
     const saveBtn = document.getElementById(`save${capitalizeFirstLetter(entityType)}Btn`);
     const cancelBtn = document.getElementById(`cancel${capitalizeFirstLetter(entityType)}Btn`);
 
-    if (saveBtn) saveBtn.textContent = `Aggiungi ${capitalizeFirstLetter(entityType).slice(0, -1)}`; // e.g., "Add Phase"
-    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (saveBtn) {
+        saveBtn.textContent = `Aggiungi ${capitalizeFirstLetter(entityType).slice(0, -1)}`; // e.g., "Add Phase"
+    } else {
+        // console.warn(`cancelEdit: Save button for ${entityType} not found.`);
+    }
+    if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+    } else {
+        // console.warn(`cancelEdit: Cancel button for ${entityType} not found.`);
+    }
 
     // Specific resets for each entity type
     switch(entityType) {
@@ -781,18 +853,25 @@ function cancelEdit(entityType) {
             document.getElementById('deliveryResult').innerHTML = '<p>Seleziona un articolo e una quantità per calcolare la data di consegna stimata.</p>';
             break;
         case 'users': // New: for users page
-            document.getElementById('usernameInputForm').value = ''; // Assuming new user form input name
-            document.getElementById('passwordInputForm').value = ''; // Assuming new user form password input
-            // Clear role checkboxes
-            document.querySelectorAll('#userRolesCheckboxes input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            document.getElementById('forcePasswordChangeCheckbox').checked = false;
+            const usernameInputForm = document.getElementById('usernameInputForm');
+            const passwordInputForm = document.getElementById('passwordInputForm');
+            const userRolesCheckboxes = document.querySelectorAll('#userRolesCheckboxes input[type="checkbox"]');
+            const forcePasswordChangeCheckbox = document.getElementById('forcePasswordChangeCheckbox');
 
-            document.getElementById('saveUserBtn').textContent = 'Aggiungi Utente';
-            document.getElementById('cancelUserBtn').style.display = 'none';
+            if (usernameInputForm) usernameInputForm.value = '';
+            if (passwordInputForm) passwordInputForm.value = '';
+            if (userRolesCheckboxes) {
+                userRolesCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            }
+            if (forcePasswordChangeCheckbox) forcePasswordChangeCheckbox.checked = false;
+
+            if (saveBtn) saveBtn.textContent = 'Aggiungi Utente';
+            if (cancelBtn) cancelBtn.style.display = 'none';
             break;
     }
+    console.log(`cancelEdit: Form per ${entityType} resettato.`);
 }
 
 /**
@@ -873,6 +952,7 @@ function editPhase(id) {
  */
 function updatePhasesTable() {
     const tbody = document.getElementById('phasesTable');
+    if (!tbody) return; // Add null check
     tbody.innerHTML = ''; 
     
     if (appData.phases.length === 0) {
@@ -1003,6 +1083,7 @@ function editMachine(id) {
  */
 function updateMachinesTable() {
     const tbody = document.getElementById('machinesTable');
+    if (!tbody) return; // Add null check
     tbody.innerHTML = ''; 
     
     if (appData.machines.length === 0) {
@@ -1062,6 +1143,7 @@ function deleteMachine(id) {
  */
 function updateDepartmentSelectOptions() {
     const select = document.getElementById('departmentId');
+    if (!select) return; // Add null check
     select.innerHTML = '<option value="new">-- Nuovo Reparto --</option>';
     appData.departments.forEach(dept => {
         const option = document.createElement('option');
@@ -1077,6 +1159,7 @@ function updateDepartmentSelectOptions() {
  */
 function updateDepartmentPhaseSelectOptions() {
     const select = document.getElementById('departmentPhaseIds');
+    if (!select) return; // Add null check
     select.innerHTML = '';
     appData.phases.forEach(phase => {
         const option = document.createElement('option');
@@ -1096,6 +1179,8 @@ function loadDepartmentForEdit() {
     const machineTypesInput = document.getElementById('departmentMachineTypes');
     const finenessesInput = document.getElementById('departmentFinenesses');
     const phaseIdsSelect = document.getElementById('departmentPhaseIds');
+
+    if (!nameInput || !machineTypesInput || !finenessesInput || !phaseIdsSelect) return; // Add null checks
 
     if (selectedId === 'new') {
         cancelEdit('departments');
@@ -1129,6 +1214,11 @@ function saveDepartment() {
     const machineTypesInput = document.getElementById('departmentMachineTypes').value.trim();
     const finenessesInput = document.getElementById('departmentFinenesses').value.trim();
     const phaseIdsSelect = document.getElementById('departmentPhaseIds');
+
+    if (!name || !machineTypesInput || !finenessesInput || !phaseIdsSelect) { // Add null checks
+        showNotification('Assicurati che tutti i campi del modulo reparto siano presenti.', 'error');
+        return;
+    }
 
     if (!name) {
         showNotification('Il nome del reparto è obbligatorio.', 'error');
@@ -1211,6 +1301,7 @@ function deleteDepartment(id) {
  */
 function updateDepartmentsTable() {
     const tbody = document.getElementById('departmentsTable');
+    if (!tbody) return; // Add null check
     tbody.innerHTML = '';
 
     if (appData.departments.length === 0) {
@@ -1260,6 +1351,7 @@ function editDepartment(id) {
  */
 function updateRawMaterialSelectOptions() {
     const select = document.getElementById('rawMaterialSelect');
+    if (!select) return; // Add null check
     select.innerHTML = '<option value="new">-- Aggiungi Nuova Materia Prima --</option>'; 
     appData.rawMaterials.forEach(rm => {
         const option = document.createElement('option');
@@ -1278,13 +1370,20 @@ function toggleNewRawMaterialInput() {
     const newNameGroup = document.getElementById('newRawMaterialNameGroup');
     const unitInput = document.getElementById('rawMaterialUnit');
     const barcodeInput = document.getElementById('rawMaterialBarcode'); // Get barcode input
+    const saveBtn = document.getElementById('saveRawMaterialBtn');
+    const cancelBtn = document.getElementById('cancelRawMaterialBtn');
+
+    if (!select || !newNameGroup || !unitInput || !barcodeInput || !saveBtn || !cancelBtn) { // Add null checks
+        console.warn("toggleNewRawMaterialInput: Uno o più elementi del form materia prima non trovati.");
+        return;
+    }
 
     if (select.value === 'new') {
         newNameGroup.style.display = 'block';
         unitInput.value = ''; // Clear unit for new material
         // barcodeInput.value = ''; // Clear barcode as it might have triggered selection
-        document.getElementById('saveRawMaterialBtn').textContent = 'Aggiungi Materia Prima';
-        document.getElementById('cancelRawMaterialBtn').style.display = 'none';
+        saveBtn.textContent = 'Aggiungi Materia Prima';
+        cancelBtn.style.display = 'none';
         currentEditingId.rawMaterials = null; // Ensure editing state is reset
     } else {
         newNameGroup.style.display = 'none';
@@ -1295,8 +1394,8 @@ function toggleNewRawMaterialInput() {
             // Barcode is for lookup/initial entry, not for modifying existing
             // barcodeInput.value = selectedRm.barcode || ''; // Do not pre-fill barcode for existing
             currentEditingId.rawMaterials = selectedRm.id; // Set editing ID for existing
-            document.getElementById('saveRawMaterialBtn').textContent = 'Aggiorna Scorta';
-            document.getElementById('cancelRawMaterialBtn').style.display = 'inline-block';
+            saveBtn.textContent = 'Aggiorna Scorta';
+            cancelBtn.style.display = 'inline-block';
         }
     }
     document.getElementById('rawMaterialQuantity').value = ''; // Always clear quantity input on toggle
@@ -1307,18 +1406,23 @@ function toggleNewRawMaterialInput() {
  */
 function handleBarcodeInput(event) {
     if (event.key === 'Enter' || event.type === 'change' || event.type === 'input') {
-        const barcode = document.getElementById('rawMaterialBarcode').value.trim();
+        const barcodeInput = document.getElementById('rawMaterialBarcode');
+        const rawMaterialSelect = document.getElementById('rawMaterialSelect');
+
+        if (!barcodeInput || !rawMaterialSelect) return; // Add null checks
+
+        const barcode = barcodeInput.value.trim();
         if (barcode) {
             const matchedRm = appData.rawMaterials.find(rm => rm.barcode === barcode);
             if (matchedRm) {
-                document.getElementById('rawMaterialSelect').value = matchedRm.id;
+                rawMaterialSelect.value = matchedRm.id;
                 toggleNewRawMaterialInput(); // This will select the matched RM
                 showNotification(`Materia prima "${matchedRm.name}" selezionata tramite barcode.`, 'info');
-                document.getElementById('rawMaterialBarcode').value = ''; // Clear barcode for next scan
+                barcodeInput.value = ''; // Clear barcode for next scan
                 document.getElementById('rawMaterialQuantity').focus(); // Focus quantity for quick entry
             } else {
                 // If no match, and the "new" option is selected, keep barcode input
-                if (document.getElementById('rawMaterialSelect').value === 'new') {
+                if (rawMaterialSelect.value === 'new') {
                     // Let the user enter a new material, potentially with this barcode
                     showNotification('Nessuna materia prima trovata con questo barcode. Puoi aggiungere una nuova materia prima.', 'warning');
                 } else {
@@ -1407,10 +1511,15 @@ function addRawMaterialOrStock() {
 function editRawMaterial(id) {
     const rawMaterial = appData.rawMaterials.find(rm => rm.id === id);
     if (rawMaterial) {
-        document.getElementById('rawMaterialSelect').value = id;
-        toggleNewRawMaterialInput(); // This will pre-fill unit and hide new name field
-        // Name is not directly editable in the update form, only unit and quantity
-        document.getElementById('rawMaterialQuantity').value = 0; // Set to 0 to indicate quantity to add
+        const select = document.getElementById('rawMaterialSelect');
+        if (select) { // Add null check
+            select.value = id;
+            toggleNewRawMaterialInput(); // This will pre-fill unit and hide new name field
+            // Name is not directly editable in the update form, only unit and quantity
+            document.getElementById('rawMaterialQuantity').value = 0; // Set to 0 to indicate quantity to add
+        } else {
+            console.warn("editRawMaterial: rawMaterialSelect non trovato.");
+        }
     } else {
         showNotification('Materia prima non trovata per la modifica.', 'error');
     }
@@ -1422,6 +1531,7 @@ function editRawMaterial(id) {
  */
 function updateRawMaterialsStockTable() {
     const tbody = document.getElementById('rawMaterialsStockTable');
+    if (!tbody) return; // Add null check
     tbody.innerHTML = '';
 
     if (appData.rawMaterials.length === 0) {
@@ -1506,6 +1616,7 @@ function addJournalEntry(rawMaterialId, type, quantity, relatedPlanId = null, ac
  */
 function updateWarehouseJournalTable() {
     const tbody = document.getElementById('warehouseJournalTable');
+    if (!tbody) return; // Add null check
     tbody.innerHTML = '';
 
     if (appData.warehouseJournal.length === 0) {
@@ -1566,10 +1677,19 @@ function openActualConsumptionModal(journalEntryId) {
     const rmName = rawMaterial ? rawMaterial.name : 'Materia Prima Sconosciuta';
     const rmUnit = rawMaterial ? rawMaterial.unit : '';
 
-    document.getElementById('modalRmInfo').innerHTML = `Aggiorna il consumo effettivo per <strong>${rmName}</strong> (Lotto ID: ${journalEntry.relatedPlanId || 'N/A'}).<br>Quantità ${journalEntry.actualConsumption ? 'attuale' : 'ipotetica'}: ${journalEntry.quantity.toFixed(2)} ${rmUnit}.`;
-    document.getElementById('actualConsumedQuantity').value = journalEntry.quantity.toFixed(2);
+    const modalRmInfo = document.getElementById('modalRmInfo');
+    const actualConsumedQuantity = document.getElementById('actualConsumedQuantity');
+    const actualConsumptionModal = document.getElementById('actualConsumptionModal');
+
+    if (!modalRmInfo || !actualConsumedQuantity || !actualConsumptionModal) {
+        console.error("openActualConsumptionModal: Uno o più elementi del modale consumo non trovati.");
+        return;
+    }
+
+    modalRmInfo.innerHTML = `Aggiorna il consumo effettivo per <strong>${rmName}</strong> (Lotto ID: ${journalEntry.relatedPlanId || 'N/A'}).<br>Quantità ${journalEntry.actualConsumption ? 'attuale' : 'ipotetica'}: ${journalEntry.quantity.toFixed(2)} ${rmUnit}.`;
+    actualConsumedQuantity.value = journalEntry.quantity.toFixed(2);
     currentModalJournalEntryId = journalEntryId;
-    document.getElementById('actualConsumptionModal').classList.add('show');
+    actualConsumptionModal.classList.add('show');
 }
 
 /**
@@ -1665,6 +1785,7 @@ function deductRawMaterialsForPlan(plan) {
  */
 function updateArticleSelectOptions() {
     const select = document.getElementById('articleId');
+    if (!select) return; // Add null check
     select.innerHTML = '<option value="new">-- Nuovo Articolo --</option>';
     appData.articles.forEach(article => {
         const option = document.createElement('option');
@@ -1687,6 +1808,11 @@ function loadArticleForEdit() {
     const cycleStepsDiv = document.getElementById('cycleSteps');
     const bomItemsDiv = document.getElementById('bomItems');
 
+    if (!codeInput || !descriptionInput || !colorInput || !clientInput || !cycleStepsDiv || !bomItemsDiv) { // Add null checks
+        console.warn("loadArticleForEdit: Uno o più elementi del form articolo non trovati.");
+        return;
+    }
+
     if (selectedId === 'new') {
         cancelEdit('articles');
     } else {
@@ -1706,17 +1832,21 @@ function loadArticleForEdit() {
             article.cycle.forEach(step => {
                 addCycleStep(); // Add a new empty step row
                 const lastStepDiv = cycleStepsDiv.lastElementChild;
-                lastStepDiv.querySelector('.phase-select').value = step.phaseId;
-                lastStepDiv.querySelector('.machine-type-select').value = step.machineType;
-                lastStepDiv.querySelector('.fineness-select').value = step.fineness;
+                if (lastStepDiv) { // Add null check
+                    lastStepDiv.querySelector('.phase-select').value = step.phaseId;
+                    lastStepDiv.querySelector('.machine-type-select').value = step.machineType;
+                    lastStepDiv.querySelector('.fineness-select').value = step.fineness;
+                }
             });
 
             // Populate BOM items
             article.bom.forEach(item => {
                 addBomItem(); // Add a new empty BOM row
                 const lastBomDiv = bomItemsDiv.lastElementChild;
-                lastBomDiv.querySelector('.raw-material-select').value = item.rawMaterialId;
-                lastBomDiv.querySelector('.quantity-per-piece-input').value = item.quantityPerPiece;
+                if (lastBomDiv) { // Add null check
+                    lastBomDiv.querySelector('.raw-material-select').value = item.rawMaterialId;
+                    lastBomDiv.querySelector('.quantity-per-piece-input').value = item.quantityPerPiece;
+                }
             });
 
             document.getElementById('saveArticleBtn').textContent = 'Salva Modifiche Articolo';
@@ -1762,7 +1892,12 @@ function addCycleStep() {
         </select>
         <button class="btn btn-danger" onclick="removeCycleStep(this)">Rimuovi</button>
     `;
-    document.getElementById('cycleSteps').appendChild(stepDiv);
+    const cycleStepsContainer = document.getElementById('cycleSteps');
+    if (cycleStepsContainer) { // Add null check
+        cycleStepsContainer.appendChild(stepDiv);
+    } else {
+        console.error("addCycleStep: Contenitore 'cycleSteps' non trovato.");
+    }
 }
 
 /**
@@ -1770,7 +1905,9 @@ function addCycleStep() {
  * @param {HTMLElement} button Il bottone "Rimuovi" cliccato.
  */
 function removeCycleStep(button) {
-    button.parentElement.remove();
+    if (button && button.parentElement) {
+        button.parentElement.remove();
+    }
 }
 
 /**
@@ -1792,7 +1929,12 @@ function addBomItem() {
         <input type="number" class="quantity-per-piece-input" placeholder="Quantità per pezzo" min="0.001" step="0.001" style="flex: 1;">
         <button class="btn btn-danger" onclick="removeBomItem(this)">Rimuovi</button>
     `;
-    document.getElementById('bomItems').appendChild(itemDiv);
+    const bomItemsContainer = document.getElementById('bomItems');
+    if (bomItemsContainer) { // Add null check
+        bomItemsContainer.appendChild(itemDiv);
+    } else {
+        console.error("addBomItem: Contenitore 'bomItems' non trovato.");
+    }
 }
 
 /**
@@ -1800,7 +1942,9 @@ function addBomItem() {
  * @param {HTMLElement} button Il bottone "Rimuovi" cliccato.
  */
 function removeBomItem(button) {
-    button.parentElement.remove();
+    if (button && button.parentElement) {
+        button.parentElement.remove();
+    }
 }
 
 /**
@@ -1902,6 +2046,7 @@ function saveArticle() {
  */
 function updateArticlesTable() {
     const tbody = document.getElementById('articlesTable');
+    if (!tbody) return; // Add null check
     tbody.innerHTML = ''; 
     
     if (appData.articles.length === 0) {
@@ -1979,6 +2124,8 @@ function updatePlanningOptions() {
     const select = document.getElementById('planningArticle');
     const editSelect = document.getElementById('editPlanningArticle'); // For edit modal
     
+    if (!select || !editSelect) return; // Add null checks
+
     select.innerHTML = '<option value="">Seleziona articolo...</option>'; 
     editSelect.innerHTML = '<option value="">Seleziona articolo...</option>';
 
@@ -2000,6 +2147,7 @@ function updatePlanningOptions() {
  */
 function updatePlanningLotSelectOptions() {
     const select = document.getElementById('planningLotId');
+    if (!select) return; // Add null check
     select.innerHTML = '<option value="new">-- Nuovo Lotto --</option>';
     appData.productionPlan.forEach(plan => {
         const article = appData.articles.find(a => a.id === plan.articleId);
@@ -2023,6 +2171,11 @@ function loadPlanningForEdit() {
     const notesTextarea = document.getElementById('planningNotes');
     const startDateInput = document.getElementById('planningStartDate');
     const deliveryResultDiv = document.getElementById('deliveryResult');
+
+    if (!articleSelect || !quantityInput || !typeSelect || !prioritySelect || !notesTextarea || !startDateInput || !deliveryResultDiv) { // Add null checks
+        console.warn("loadPlanningForEdit: Uno o più elementi del form pianificazione non trovati.");
+        return;
+    }
 
     if (selectedId === 'new') {
         cancelEdit('planning');
@@ -2049,8 +2202,10 @@ function loadPlanningForEdit() {
                 <p><strong>Giorni lavorativi totali:</strong> ${plan.totalDays}</p>
             `;
 
-            document.getElementById('savePlanningBtn').textContent = 'Salva Modifiche Pianificazione';
-            document.getElementById('cancelPlanningBtn').style.display = 'inline-block';
+            const saveBtn = document.getElementById('savePlanningBtn');
+            const cancelBtn = document.getElementById('cancelPlanningBtn');
+            if (saveBtn) saveBtn.textContent = 'Salva Modifiche Pianificazione';
+            if (cancelBtn) cancelBtn.style.display = 'inline-block';
         } else {
             showNotification('Lotto di pianificazione selezionato non trovato.', 'error');
             cancelEdit('planning');
@@ -2166,12 +2321,28 @@ function calculateDeliveryDetails(articleId, quantity, priority, notes, type, de
  * Funzione chiamata dal pulsante "Calcola Consegna" nella pagina Pianificazione
  */
 function calculateDelivery() {
-    const articleId = parseInt(document.getElementById('planningArticle').value);
-    const quantity = parseInt(document.getElementById('planningQuantity').value);
-    const type = document.getElementById('planningType').value; // New: Get type
-    const priority = document.getElementById('planningPriority').value;
-    const notes = document.getElementById('planningNotes').value.trim();
-    const startDate = document.getElementById('planningStartDate').value;
+    const planningArticleSelect = document.getElementById('planningArticle');
+    const planningQuantityInput = document.getElementById('planningQuantity');
+    const planningTypeSelect = document.getElementById('planningType');
+    const planningPrioritySelect = document.getElementById('planningPriority');
+    const planningNotesTextarea = document.getElementById('planningNotes');
+    const planningStartDateInput = document.getElementById('planningStartDate');
+    const deliveryResultDiv = document.getElementById('deliveryResult');
+    const savePlanningBtn = document.getElementById('savePlanningBtn');
+    const cancelPlanningBtn = document.getElementById('cancelPlanningBtn');
+
+    if (!planningArticleSelect || !planningQuantityInput || !planningTypeSelect || !planningPrioritySelect || !planningNotesTextarea || !planningStartDateInput || !deliveryResultDiv || !savePlanningBtn || !cancelPlanningBtn) {
+        console.error("calculateDelivery: Uno o più elementi del form di pianificazione non trovati.");
+        showNotification("Errore: Impossibile trovare tutti gli elementi del form di pianificazione.", "error");
+        return;
+    }
+
+    const articleId = parseInt(planningArticleSelect.value);
+    const quantity = parseInt(planningQuantityInput.value);
+    const type = planningTypeSelect.value; // New: Get type
+    const priority = planningPrioritySelect.value;
+    const notes = planningNotesTextarea.value.trim();
+    const startDate = planningStartDateInput.value;
 
     if (!startDate) {
         showNotification('Seleziona una data di inizio per la pianificazione.', 'error');
@@ -2180,12 +2351,12 @@ function calculateDelivery() {
 
     currentCalculatedPlanningDetails = calculateDeliveryDetails(articleId, quantity, priority, notes, type, startDate); // Pass type
 
-    const resultDiv = document.getElementById('deliveryResult');
+    
     if (currentCalculatedPlanningDetails) {
         const formattedStartDate = new Date(currentCalculatedPlanningDetails.startDate).toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         const formattedDeliveryDate = new Date(currentCalculatedPlanningDetails.estimatedDeliveryDate).toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        resultDiv.innerHTML = `
+        deliveryResultDiv.innerHTML = `
             <div class="delivery-date">
                 📅 Consegna Attuale: <br><strong>${formattedDeliveryDate}</strong>
             </div>
@@ -2197,14 +2368,14 @@ function calculateDelivery() {
             </ul>
             ${currentCalculatedPlanningDetails.bottleneck ? `<p class="error"><strong>Attenzione:</strong> ${currentCalculatedPlanningDetails.bottleneck}</p>` : ''}
         `;
-        document.getElementById('savePlanningBtn').style.display = 'inline-block';
-        document.getElementById('savePlanningBtn').textContent = currentEditingId.planning ? 'Salva Modifiche Pianificazione' : 'Aggiungi alla Pianificazione';
-        document.getElementById('cancelPlanningBtn').style.display = 'inline-block';
+        savePlanningBtn.style.display = 'inline-block';
+        savePlanningBtn.textContent = currentEditingId.planning ? 'Salva Modifiche Pianificazione' : 'Aggiungi alla Pianificazione';
+        cancelPlanningBtn.style.display = 'inline-block';
         showNotification('Calcolo di consegna completato. Puoi salvare la pianificazione.', 'success');
     } else {
-        resultDiv.innerHTML = '<p class="error">Impossibile calcolare la pianificazione. Controlla gli input e le configurazioni.</p>';
-        document.getElementById('savePlanningBtn').style.display = 'none';
-        document.getElementById('cancelPlanningBtn').style.display = 'none';
+        deliveryResultDiv.innerHTML = '<p class="error">Impossibile calcolare la pianificazione. Controlla gli input e le configurazioni.</p>';
+        savePlanningBtn.style.display = 'none';
+        cancelPlanningBtn.style.display = 'none';
     }
 }
 
@@ -2338,6 +2509,7 @@ function revertRawMaterialsForPlan(plan) {
  */
 function updatePlanningList() {
     const planningListDiv = document.getElementById('planningList');
+    if (!planningListDiv) return; // Add null check
     planningListDiv.innerHTML = '';
     
     if (appData.productionPlan.length === 0) {
@@ -2405,19 +2577,35 @@ function openEditPlanningModal(planId) {
         return;
     }
 
-    document.getElementById('editPlanningLotId').value = plan.id;
-    document.getElementById('editPlanningArticle').value = plan.articleId;
-    document.getElementById('editPlanningQuantity').value = plan.quantity;
-    document.getElementById('editPlanningType').value = plan.type || 'production';
-    document.getElementById('editPlanningPriority').value = plan.priority;
-    document.getElementById('editPlanningNotes').value = plan.notes || '';
-    document.getElementById('editPlanningStartDate').value = new Date(plan.startDate).toISOString().split('T')[0];
+    const editPlanningLotId = document.getElementById('editPlanningLotId');
+    const editPlanningArticle = document.getElementById('editPlanningArticle');
+    const editPlanningQuantity = document.getElementById('editPlanningQuantity');
+    const editPlanningType = document.getElementById('editPlanningType');
+    const editPlanningPriority = document.getElementById('editPlanningPriority');
+    const editPlanningNotes = document.getElementById('editPlanningNotes');
+    const editPlanningStartDate = document.getElementById('editPlanningStartDate');
+    const editPlanningModal = document.getElementById('editPlanningModal');
+
+    if (!editPlanningLotId || !editPlanningArticle || !editPlanningQuantity || !editPlanningType || !editPlanningPriority || !editPlanningNotes || !editPlanningStartDate || !editPlanningModal) {
+        console.error("openEditPlanningModal: Uno o più elementi del modale di modifica pianificazione non trovati.");
+        showNotification("Errore: Impossibile trovare tutti gli elementi del modale di modifica pianificazione.", "error");
+        return;
+    }
+
+
+    editPlanningLotId.value = plan.id;
+    editPlanningArticle.value = plan.articleId;
+    editPlanningQuantity.value = plan.quantity;
+    editPlanningType.value = plan.type || 'production';
+    editPlanningPriority.value = plan.priority;
+    editPlanningNotes.value = plan.notes || '';
+    editPlanningStartDate.value = new Date(plan.startDate).toISOString().split('T')[0];
 
     // Set currentEditingId to use existing savePlanning logic
     currentEditingId.planning = plan.id; 
     currentCalculatedPlanningDetails = null; // Clear old calculated details, will be recalculated on save.
 
-    document.getElementById('editPlanningModal').classList.add('show');
+    editPlanningModal.classList.add('show');
 }
 
 /**
@@ -2484,7 +2672,13 @@ function deletePlanning(id) {
  * @param {number} planId L'ID del lotto da riprogrammare.
  */
 function reschedulePlanning(planId) {
-    const newStartDate = document.getElementById(`rescheduleDate-${planId}`).value;
+    const newStartDateInput = document.getElementById(`rescheduleDate-${planId}`);
+    if (!newStartDateInput) {
+        console.error(`reschedulePlanning: Input data di riprogrammazione per lotto ${planId} non trovato.`);
+        showNotification('Errore: Impossibile trovare l\'input della data per la riprogrammazione.', 'error');
+        return;
+    }
+    const newStartDate = newStartDateInput.value;
     if (!newStartDate) {
         showNotification('Seleziona una nuova data di inizio per riprogrammare.', 'error');
         return;
@@ -2546,7 +2740,14 @@ function markPlanningComplete(id) {
  * Importa piani di produzione da un input JSON.
  */
 function importPlansFromJson() {
-    const jsonString = document.getElementById('jsonImportArea').value.trim();
+    const jsonImportArea = document.getElementById('jsonImportArea');
+    if (!jsonImportArea) {
+        console.error("importPlansFromJson: Elemento 'jsonImportArea' non trovato.");
+        showNotification("Errore: Impossibile trovare l'area di importazione JSON.", "error");
+        return;
+    }
+
+    const jsonString = jsonImportArea.value.trim();
     if (!jsonString) {
         showNotification('Incolla il testo JSON nella casella.', 'error');
         return;
@@ -2622,7 +2823,7 @@ function importPlansFromJson() {
 
     saveData();
     updateAllTables();
-    document.getElementById('jsonImportArea').value = ''; 
+    jsonImportArea.value = ''; 
 
     if (plansAddedCount > 0) {
         showNotification(`Importazione completata. Piani aggiunti: ${plansAddedCount}. Piani falliti: ${plansFailedCount}.`, 'success');
@@ -2653,6 +2854,9 @@ function navigateDeliveryWeek(offset) {
  */
 function updateDeliveryCalendar() {
     const deliveryScheduleDiv = document.getElementById('deliverySchedule');
+    const currentDeliveryWeekRange = document.getElementById('currentDeliveryWeekRange');
+    if (!deliveryScheduleDiv || !currentDeliveryWeekRange) return; // Add null checks
+
     deliveryScheduleDiv.innerHTML = ''; 
 
     const daysOfWeekNames = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
@@ -2673,7 +2877,7 @@ function updateDeliveryCalendar() {
 
     const firstDayFormatted = weekDaysToDisplay.length > 0 ? weekDaysToDisplay[0].toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : '';
     const lastDayFormatted = weekDaysToDisplay.length > 0 ? weekDaysToDisplay[weekDaysToDisplay.length - 1].toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
-    document.getElementById('currentDeliveryWeekRange').textContent = `${firstDayFormatted} - ${lastDayFormatted}`;
+    currentDeliveryWeekRange.textContent = `${firstDayFormatted} - ${lastDayFormatted}`;
 
     const dailyDeliveryMap = new Map(); 
 
@@ -2747,6 +2951,9 @@ function navigateWorkloadWeek(offset) {
  */
 function updateDailyWorkloadCalendar() {
     const workloadScheduleDiv = document.getElementById('dailyWorkloadCalendar');
+    const currentWorkloadWeekRange = document.getElementById('currentWorkloadWeekRange');
+    if (!workloadScheduleDiv || !currentWorkloadWeekRange) return; // Add null checks
+
     workloadScheduleDiv.innerHTML = ''; 
 
     const daysOfWeekNames = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato']; 
@@ -2765,7 +2972,7 @@ function updateDailyWorkloadCalendar() {
 
     const firstDayFormatted = weekDaysToDisplay.length > 0 ? weekDaysToDisplay[0].toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : '';
     const lastDayFormatted = weekDaysToDisplay.length > 0 ? weekDaysToDisplay[weekDaysToDisplay.length - 1].toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
-    document.getElementById('currentWorkloadWeekRange').textContent = `${firstDayFormatted} - ${lastDayFormatted}`;
+    currentWorkloadWeekRange.textContent = `${firstDayFormatted} - ${lastDayFormatted}`;
 
     const dailyWorkloadMap = new Map(); 
 
@@ -2874,6 +3081,8 @@ function updateDailyWorkloadCalendar() {
 function updateDashboard() {
     // Statistiche Generali
     const generalStatsDiv = document.getElementById('generalStats');
+    if (!generalStatsDiv) return; // Add null check
+
     const totalPhases = appData.phases.length;
     const totalMachines = appData.machines.length;
     const totalDepartments = appData.departments.length;
@@ -2895,6 +3104,7 @@ function updateDashboard() {
 
     // Utilizzo Macchinari (placeholder, richiederebbe una logica di allocazione più complessa)
     const machineStatsDiv = document.getElementById('machineStats');
+    if (!machineStatsDiv) return; // Add null check
     machineStatsDiv.innerHTML = '';
     if (appData.machines.length === 0) {
         machineStatsDiv.innerHTML = '<p>Nessun macchinario registrato.</p>';
@@ -2915,6 +3125,7 @@ function updateDashboard() {
 
     // Prossime Consegne
     const upcomingDeliveriesDiv = document.getElementById('upcomingDeliveries');
+    if (!upcomingDeliveriesDiv) return; // Add null check
     upcomingDeliveriesDiv.innerHTML = '';
     const upcoming = appData.productionPlan
         .filter(p => p.status !== 'Completato')
@@ -2937,6 +3148,7 @@ function updateDashboard() {
 
     // Carico di Lavoro (Placeholder - richiederebbe una libreria di grafici come Chart.js)
     const workloadChartDiv = document.getElementById('workloadChart');
+    if (!workloadChartDiv) return; // Add null check
     workloadChartDiv.innerHTML = '<p>Grafico del carico di lavoro (richiede libreria esterna per la visualizzazione).</p>';
 }
 
@@ -3023,8 +3235,15 @@ function importDataFromJson(event) {
  * Gestisce il processo di login dell'utente.
  */
 function loginUser() {
+    console.log("loginUser: Tentativo di login.");
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput'); // New: get password input
+    if (!usernameInput || !passwordInput) { // Add null checks
+        console.error("loginUser: Elementi username/password input non trovati.");
+        showNotification("Errore: Impossibile trovare i campi di login.", "error");
+        return;
+    }
+
     const username = usernameInput.value.trim();
     const password = passwordInput.value; // Get plain text password
 
@@ -3039,7 +3258,7 @@ function loginUser() {
         currentUser = { ...foundUser }; // Store a copy of the user object, including roles
         localStorage.setItem('magliflex-currentUser', JSON.stringify(currentUser)); // Store entire object
         document.getElementById('loginOverlay').classList.remove('show');
-        document.getElementById('appContent').style.display = 'block';
+        document.getElementById('appContent').style.display = 'flex'; // Changed to flex for proper layout
         showNotification(`Benvenuto, ${currentUser.username}!`, 'success');
         markWelcomeNotificationsAsRead(); // Mark specific notifications as read after adding "Benvenuto"
         updateNavMenuVisibility(); // Update nav menu visibility immediately after login
@@ -3049,9 +3268,11 @@ function loginUser() {
             showNotification('La tua password deve essere cambiata al primo accesso. Per favore, contatta un amministratore.', 'warning');
             // In a real app, this would open a "change password" modal
         }
-        showPage('phases'); // Show default page after login
+        showPage('dashboard'); // Show default page after login
+        console.log(`loginUser: Utente ${currentUser.username} loggato con successo.`);
     } else {
         showNotification('Nome utente o password non validi.', 'error');
+        console.warn(`loginUser: Tentativo di login fallito per utente "${username}".`);
     }
 }
 
@@ -3060,29 +3281,35 @@ function loginUser() {
  * @param {boolean} showMessage Whether to display a logout success message. Default is true.
  */
 function logoutUser(showMessage = true) {
+    console.log("logoutUser: Tentativo di logout.");
     currentUser = null;
     localStorage.removeItem('magliflex-currentUser');
     localStorage.removeItem('magliflex-data'); // Clear all app data on logout
     resetAppDataToDefaultsAndAddExamples(); // Re-initialize with default/example data
     document.getElementById('appContent').style.display = 'none';
     document.getElementById('loginOverlay').classList.add('show');
-    document.getElementById('usernameInput').value = ''; // Clear username input
-    document.getElementById('passwordInput').value = ''; // Clear password input
+    
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    if (usernameInput) usernameInput.value = ''; // Clear username input
+    if (passwordInput) passwordInput.value = ''; // Clear password input
+
     if (showMessage) {
         showNotification('Logout effettuato con successo.', 'info');
     }
     updateNavMenuVisibility(); // Update nav menu visibility after logout (hide admin buttons)
+    console.log("logoutUser: Logout completato.");
 }
 
-// --- NEW: USER MANAGEMENT FUNCTIONS (PLACEHOLDERS) ---
+// --- NEW: USER MANAGEMENT FUNCTIONS ---
 
 /**
- * Renders the users table. (To be implemented with actual HTML structure)
+ * Renders the users table.
  */
 function updateUsersTable() {
-    const tbody = document.getElementById('usersTableBody'); // Assuming this ID will exist in HTML
+    const tbody = document.getElementById('usersTableBody'); 
     if (!tbody) {
-        // console.warn("Users table body not found (users page not yet integrated into HTML).");
+        console.warn("updateUsersTable: Users table body not found (users page might not be active or HTML not loaded).");
         return;
     }
     tbody.innerHTML = '';
@@ -3111,16 +3338,81 @@ function updateUsersTable() {
         `;
         tbody.appendChild(row);
     });
+    console.log("updateUsersTable: Tabella utenti aggiornata.");
 }
 
 /**
  * Handles saving a new user or updating an existing one.
  */
 function saveUser() {
-    showNotification('Funzione di salvataggio utente non ancora implementata. (Placeholder)', 'info');
-    // Logic for adding/updating user based on currentEditingId.users
-    // Validate inputs (username, password, roles)
-    // Update appData.users and call saveData() and updateAllTables()
+    const usernameInput = document.getElementById('usernameInputForm');
+    const passwordInput = document.getElementById('passwordInputForm');
+    const roleCheckboxes = document.querySelectorAll('#userRolesCheckboxes input[type="checkbox"]');
+    const forcePasswordChangeCheckbox = document.getElementById('forcePasswordChangeCheckbox');
+
+    if (!usernameInput || !passwordInput || !roleCheckboxes || !forcePasswordChangeCheckbox) {
+        showNotification('Errore: Impossibile trovare tutti gli elementi del form utente.', 'error');
+        console.error("saveUser: Uno o più elementi del form utente non trovati.");
+        return;
+    }
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+    const roles = Array.from(roleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+    const forcePasswordChange = forcePasswordChangeCheckbox.checked;
+
+    if (!username || (!currentEditingId.users && !password)) { // Password is required for new users
+        showNotification('Nome utente e password (per nuovi utenti) sono obbligatori.', 'error');
+        return;
+    }
+
+    if (currentEditingId.users) {
+        // Update existing user
+        const userToUpdate = appData.users.find(u => u.id === currentEditingId.users);
+        if (userToUpdate) {
+            // Prevent changing own admin role if you are the only admin (optional but good practice)
+            if (currentUser && currentUser.id === userToUpdate.id && !roles.includes('admin')) {
+                const adminUsers = appData.users.filter(u => u.roles.includes('admin'));
+                if (adminUsers.length === 1 && adminUsers[0].id === userToUpdate.id) {
+                    showNotification('Non puoi rimuovere il tuo ruolo di amministratore se sei l\'unico amministratore.', 'error');
+                    return;
+                }
+            }
+
+            if (appData.users.some(u => u.username.toLowerCase() === username.toLowerCase() && u.id !== currentEditingId.users)) {
+                showNotification('Un utente con questo nome esiste già.', 'error');
+                return;
+            }
+            userToUpdate.username = username;
+            if (password) { // Only update password if provided
+                userToUpdate.password = password;
+            }
+            userToUpdate.roles = roles;
+            userToUpdate.forcePasswordChange = forcePasswordChange;
+            showNotification('Utente aggiornato con successo!', 'success');
+            // If current user's roles changed, update currentUser object
+            if (currentUser && currentUser.id === userToUpdate.id) {
+                currentUser.roles = roles;
+                localStorage.setItem('magliflex-currentUser', JSON.stringify(currentUser));
+                updateNavMenuVisibility(); // Refresh menu visibility
+            }
+        } else {
+            showNotification('Utente da aggiornare non trovato.', 'error');
+        }
+    } else {
+        // Add new user
+        if (appData.users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+            showNotification('Un utente con questo nome esiste già.', 'error');
+            return;
+        }
+        const newUser = { id: Date.now(), username, password, roles, forcePasswordChange };
+        appData.users.push(newUser);
+        showNotification('Utente aggiunto con successo!', 'success');
+    }
+
+    saveData();
+    cancelEdit('users');
+    updateUsersTable(); // Explicitly update the users table
 }
 
 /**
@@ -3128,9 +3420,34 @@ function saveUser() {
  * @param {number} userId The ID of the user to edit.
  */
 function editUser(userId) {
-    showNotification(`Funzione di modifica utente ${userId} non ancora implementata. (Placeholder)`, 'info');
-    // Find user by ID, populate form fields including roles checkboxes, set currentEditingId.users
-    // Show "Save Changes" button, hide "Add User" button
+    const user = appData.users.find(u => u.id === userId);
+    if (user) {
+        currentEditingId.users = userId;
+        const usernameInput = document.getElementById('usernameInputForm');
+        const passwordInput = document.getElementById('passwordInputForm');
+        const roleCheckboxes = document.querySelectorAll('#userRolesCheckboxes input[type="checkbox"]');
+        const forcePasswordChangeCheckbox = document.getElementById('forcePasswordChangeCheckbox');
+        const saveUserBtn = document.getElementById('saveUserBtn');
+        const cancelUserBtn = document.getElementById('cancelUserBtn');
+
+        if (!usernameInput || !passwordInput || !roleCheckboxes || !forcePasswordChangeCheckbox || !saveUserBtn || !cancelUserBtn) {
+            console.error("editUser: Uno o più elementi del form utente non trovati per la modifica.");
+            showNotification("Errore: Impossibile preparare il form per la modifica utente.", "error");
+            return;
+        }
+
+        usernameInput.value = user.username;
+        passwordInput.value = ''; // Never pre-fill password for security
+        roleCheckboxes.forEach(checkbox => {
+            checkbox.checked = user.roles.includes(checkbox.value);
+        });
+        forcePasswordChangeCheckbox.checked = user.forcePasswordChange;
+
+        saveUserBtn.textContent = 'Salva Modifiche Utente';
+        cancelUserBtn.style.display = 'inline-block';
+    } else {
+        showNotification('Utente non trovato per la modifica.', 'error');
+    }
 }
 
 /**
@@ -3142,11 +3459,19 @@ function deleteUser(userId) {
         showNotification('Non puoi eliminare il tuo stesso account mentre sei loggato.', 'error');
         return;
     }
-    if (confirm('Sei sicuro di voler eliminare questo utente?')) {
+    const userToDelete = appData.users.find(u => u.id === userId);
+    if (userToDelete && confirm(`Sei sicuro di voler eliminare l'utente ${userToDelete.username}? Questa azione è irreversibile.`)) {
         appData.users = appData.users.filter(user => user.id !== userId);
         saveData();
-        updateAllTables();
+        updateUsersTable();
         showNotification('Utente eliminato con successo.', 'success');
+        // If the deleted user was the *last* admin, notify
+        const remainingAdmins = appData.users.filter(u => u.roles.includes('admin'));
+        if (remainingAdmins.length === 0) {
+            showNotification('Attenzione: Non ci sono più utenti con ruolo di amministratore. Nessuno potrà gestire gli utenti.', 'warning');
+        }
+    } else if (!userToDelete) {
+        showNotification('Utente non trovato per l\'eliminazione.', 'error');
     }
 }
 
@@ -3156,13 +3481,15 @@ function deleteUser(userId) {
  */
 function resetUserPassword(userId) {
     const user = appData.users.find(u => u.id === userId);
-    if (user && confirm(`Sei sicuro di voler resettare la password per l'utente ${user.username}? Verrà impostata una password temporanea casuale.`)) {
+    if (user && confirm(`Sei sicuro di voler resettare la password per l'utente ${user.username}? Verrà impostata una password temporanea casuale e l'utente dovrà cambiarla al prossimo accesso.`)) {
         const newPassword = Math.random().toString(36).substring(2, 10); // Generate a simple temporary password
         user.password = newPassword; // For simulation, update directly
         user.forcePasswordChange = true;
         saveData();
-        updateAllTables();
+        updateUsersTable(); // Refresh table to show forcePasswordChange flag updated
         showNotification(`Password per ${user.username} resettata a "${newPassword}". L'utente dovrà cambiarla al prossimo accesso.`, 'warning');
+    } else if (!user) {
+        showNotification('Utente non trovato per il reset password.', 'error');
     }
 }
 
@@ -3175,7 +3502,9 @@ function forcePasswordChangeOnNextLogin(userId) {
     if (user && confirm(`Sei sicuro di voler forzare il cambio password per l'utente ${user.username} al prossimo accesso?`)) {
         user.forcePasswordChange = true;
         saveData();
-        updateAllTables();
+        updateUsersTable(); // Refresh table to show forcePasswordChange flag updated
         showNotification(`Cambio password forzato impostato per ${user.username}.`, 'info');
+    } else if (!user) {
+        showNotification('Utente non trovato per l\'impostazione del cambio password forzato.', 'error');
     }
 }
