@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('loginOverlay').classList.remove('show');
         document.getElementById('appContent').style.display = 'block';
         loadAndInitializeAppData();
-        showNotification(`Bentornato, ${currentUser}!`, 'info');
+        // The welcome/bentornato message is added in loadAndInitializeAppData,
+        // and then we mark it read.
+        markWelcomeNotificationsAsRead(); // Mark specific notifications as read on load
     } else {
         document.getElementById('loginOverlay').classList.add('show');
         document.getElementById('appContent').style.display = 'none';
@@ -524,6 +526,26 @@ function showNotification(message, type = 'info') {
     saveData();
     updateNotificationBadge();
 }
+
+/**
+ * Marca automaticamente come letti i messaggi di "Benvenuto" e "Bentornato".
+ */
+function markWelcomeNotificationsAsRead() {
+    const messagesToMark = ['Benvenuto,', 'Bentornato,'];
+    let changed = false;
+    appData.notifications.forEach(n => {
+        if (!n.isRead && messagesToMark.some(msg => n.message.startsWith(msg))) {
+            n.isRead = true;
+            changed = true;
+        }
+    });
+    if (changed) {
+        saveData();
+        updateNotificationBadge();
+        renderNotifications(); // Re-render if modal is open
+    }
+}
+
 
 /**
  * Aggiorna il badge numerico sul pulsante "Messaggi Importanti".
@@ -2915,6 +2937,7 @@ function loginUser() {
         document.getElementById('appContent').style.display = 'block';
         loadAndInitializeAppData(); // Load data AFTER successful login
         showNotification(`Benvenuto, ${currentUser}!`, 'success');
+        markWelcomeNotificationsAsRead(); // Mark specific notifications as read after adding "Benvenuto"
     } else {
         showNotification('Per favore, inserisci un nome utente.', 'warning');
     }
