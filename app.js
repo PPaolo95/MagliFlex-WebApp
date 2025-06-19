@@ -5,11 +5,12 @@ let currentEditingId = {
     departments: null,
     rawMaterials: null,
     articles: null,
-    planning: null
+    planning: null,
+    users: null // New: for user management
 };
 
 // Global variable to store the current logged-in user
-let currentUser = null;
+let currentUser = null; // Stores user object including roles
 
 // Gestione dati dell'applicazione
 let appData = {
@@ -21,6 +22,7 @@ let appData = {
     articles: [],
     productionPlan: [],
     notifications: [], 
+    users: [], // New: users data
     currentDeliveryWeekStartDate: null,
     currentWorkloadWeekStartDate: null
 };
@@ -36,16 +38,30 @@ let currentNotificationFilter = 'unread';
 
 // Inizializzazione: Carica i dati salvati e aggiorna l'UI quando il DOM è pronto
 document.addEventListener('DOMContentLoaded', function() {
+    // Load and initialize app data, including users
+    loadAndInitializeAppData();
+
     // Check for existing login
-    const savedUser = localStorage.getItem('magliflex-currentUser');
-    if (savedUser) {
-        currentUser = savedUser;
-        document.getElementById('loginOverlay').classList.remove('show');
-        document.getElementById('appContent').style.display = 'block';
-        loadAndInitializeAppData();
-        // The welcome/bentornato message is added in loadAndInitializeAppData,
-        // and then we mark it read.
-        markWelcomeNotificationsAsRead(); // Mark specific notifications as read on load
+    const savedUserString = localStorage.getItem('magliflex-currentUser');
+    if (savedUserString) {
+        try {
+            currentUser = JSON.parse(savedUserString);
+            // Verify if the user still exists in the loaded appData.users
+            const userExists = appData.users.some(u => u.username === currentUser.username);
+            if (userExists) {
+                document.getElementById('loginOverlay').classList.remove('show');
+                document.getElementById('appContent').style.display = 'block';
+                showNotification(`Bentornato, ${currentUser.username}!`, 'info');
+                markWelcomeNotificationsAsRead(); // Mark specific notifications as read on load
+                updateAllTables(); // Refresh UI including dashboard menu item visibility
+            } else {
+                // User from localStorage no longer exists in appData (e.g., reset data)
+                logoutUser(false); // Logout without showing "Logged out" message
+            }
+        } catch (e) {
+            console.error("Errore nel parsing dell'utente salvato:", e);
+            logoutUser(false); // Logout if saved user data is corrupted
+        }
     } else {
         document.getElementById('loginOverlay').classList.add('show');
         document.getElementById('appContent').style.display = 'none';
@@ -79,6 +95,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Event listener for password input in login overlay
+    document.getElementById('passwordInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            loginUser();
+        }
+    });
+
     // Event listener to close the menu if clicking outside
     document.addEventListener('click', function(event) {
         const mainNavMenu = document.getElementById('mainNavMenu');
@@ -91,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /**
  * Carica i dati dell'applicazione da localStorage o usa i valori predefiniti.
- * Questa funzione viene chiamata dopo il login.
+ * Questa funzione viene chiamata all'avvio dell'app.
  */
 function loadAndInitializeAppData() {
     const saved = localStorage.getItem('magliflex-data');
@@ -108,6 +131,7 @@ function loadAndInitializeAppData() {
             appData.articles = loadedData.articles || [];
             appData.productionPlan = loadedData.productionPlan || [];
             appData.notifications = loadedData.notifications || [];
+            appData.users = mergeData(getInitialUsers(), loadedData.users); // New: Load and merge users
 
             // Convert date strings back to Date objects
             appData.currentDeliveryWeekStartDate = loadedData.currentDeliveryWeekStartDate ? new Date(loadedData.currentDeliveryWeekStartDate) : getStartOfWeek(new Date());
@@ -122,10 +146,11 @@ function loadAndInitializeAppData() {
                 if (typeof entry.date === 'string') entry.date = new Date(entry.date);
             });
 
+            // If no articles/plans/raw materials (meaning, maybe a fresh install or data cleared), add example data
             if (appData.articles.length === 0 && appData.productionPlan.length === 0 && appData.rawMaterials.length === 0) {
                 addExampleData();
             } else {
-                ensureInitialAnagraphics();
+                ensureInitialAnagraphics(); // Ensure core anagraphics are always present and merged
             }
         } catch (e) {
             console.error('Errore nel caricamento dati dal localStorage:', e);
@@ -140,7 +165,8 @@ function loadAndInitializeAppData() {
     updateAllTables();
     document.getElementById('rawMaterialLoadDate').valueAsDate = new Date();
     document.getElementById('planningStartDate').valueAsDate = new Date();
-    showPage('phases'); 
+    // Do NOT show a page yet, wait for login to show content
+    // showPage('phases'); 
 }
 
 /**
@@ -169,6 +195,8 @@ function ensureInitialAnagraphics() {
         });
         appData.rawMaterials = mergeData(initialRawMaterials, appData.rawMaterials); // Merge existing with new defaults
     }
+    // New: Ensure initial users are always present
+    appData.users = mergeData(getInitialUsers(), appData.users);
     saveData();
 }
 
@@ -238,6 +266,18 @@ function getInitialRawMaterials() {
 }
 
 /**
+ * Restituisce gli utenti iniziali predefiniti (incluso un admin).
+ * Per un'applicazione reale, le password andrebbero hashate e gestite in modo sicuro.
+ */
+function getInitialUsers() {
+    return [
+        { id: 1, username: 'admin', password: 'adminpass', roles: ['admin'], forcePasswordChange: false },
+        { id: 2, username: 'user1', password: 'password123', roles: ['planning'], forcePasswordChange: true }
+    ];
+}
+
+
+/**
  * Resetta appData ai suoi valori predefiniti e aggiunge i dati di esempio.
  */
 function resetAppDataToDefaultsAndAddExamples() {
@@ -250,6 +290,7 @@ function resetAppDataToDefaultsAndAddExamples() {
         articles: [],
         productionPlan: [],
         notifications: [], 
+        users: getInitialUsers(), // New: include initial users on reset
         currentDeliveryWeekStartDate: getStartOfWeek(new Date()),
         currentWorkloadWeekStartDate: getStartOfWeek(new Date())
     };
@@ -370,7 +411,9 @@ function mergeData(defaultArray, loadedArray) {
     if (!loadedArray) return defaultArray;
 
     const mergedMap = new Map();
+    // Add default items first
     defaultArray.forEach(item => mergedMap.set(item.id, item));
+    // Overwrite with loaded items (or add new loaded items)
     loadedArray.forEach(item => mergedMap.set(item.id, item));
     
     return Array.from(mergedMap.values());
@@ -423,6 +466,8 @@ function updateAllTables() {
     updateDailyWorkloadCalendar();
     updateDashboard();
     updateNotificationBadge(); // Update badge on every UI refresh
+    updateNavMenuVisibility(); // New: update navigation menu items visibility based on user roles
+    updateUsersTable(); // New: Update users table if user management page exists
 }
 
 /**
@@ -437,15 +482,31 @@ function showPage(pageId) {
         return;
     }
 
+    // New: Check user permissions for specific pages
+    if (pageId === 'users' && (!currentUser.roles || !currentUser.roles.includes('admin'))) {
+        showNotification('Non hai i permessi per accedere a questa pagina. Richiede il ruolo di Amministratore.', 'error');
+        return;
+    }
+
     const pages = document.querySelectorAll('.page');
     const navBtns = document.querySelectorAll('#mainNavMenu .nav-btn'); // Select buttons specifically in the main nav menu
     
     pages.forEach(p => p.classList.remove('active'));
     navBtns.forEach(btn => btn.classList.remove('active'));
     
-    document.getElementById(pageId).classList.add('active');
-    // Find the correct nav button within the mainNavMenu
-    document.querySelector(`#mainNavMenu .nav-btn[onclick="showPage('${pageId}')"]`).classList.add('active');
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.classList.add('active');
+        // Find the correct nav button within the mainNavMenu
+        const activeNavBtn = document.querySelector(`#mainNavMenu .nav-btn[onclick="showPage('${pageId}')"]`);
+        if (activeNavBtn) {
+            activeNavBtn.classList.add('active');
+        }
+    } else {
+        console.warn(`Pagina con ID "${pageId}" non trovata.`);
+        showNotification(`Errore: pagina "${pageId}" non trovata.`, 'error');
+        return; // Stop execution if page doesn't exist
+    }
     
     // Close the navigation menu when a page is selected (for mobile)
     const mainNavMenu = document.getElementById('mainNavMenu');
@@ -495,6 +556,29 @@ function showPage(pageId) {
         updatePlanningOptions(); // ensure article list for planning is updated
         cancelEdit('articles'); // Clear form and reset editing state
     }
+    if (pageId === 'users') { // New: for users page
+        updateUsersTable();
+        cancelEdit('users');
+    }
+}
+
+/**
+ * Updates the visibility of navigation menu items based on the current user's roles.
+ */
+function updateNavMenuVisibility() {
+    const navMenu = document.getElementById('mainNavMenu');
+    if (!navMenu) return; // Exit if menu not found (e.g. before DOMContentLoaded)
+
+    // Example: Hide 'users' button if not admin
+    const usersBtn = navMenu.querySelector('button[onclick="showPage(\'users\')"]');
+    if (usersBtn) {
+        if (currentUser && currentUser.roles && currentUser.roles.includes('admin')) {
+            usersBtn.style.display = 'block'; // Or 'flex', 'inline-block' based on layout
+        } else {
+            usersBtn.style.display = 'none';
+        }
+    }
+    // Add other permission-based visibility logic here if needed
 }
 
 /**
@@ -695,6 +779,18 @@ function cancelEdit(entityType) {
             document.getElementById('planningNotes').value = '';
             document.getElementById('planningStartDate').valueAsDate = new Date();
             document.getElementById('deliveryResult').innerHTML = '<p>Seleziona un articolo e una quantità per calcolare la data di consegna stimata.</p>';
+            break;
+        case 'users': // New: for users page
+            document.getElementById('usernameInputForm').value = ''; // Assuming new user form input name
+            document.getElementById('passwordInputForm').value = ''; // Assuming new user form password input
+            // Clear role checkboxes
+            document.querySelectorAll('#userRolesCheckboxes input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('forcePasswordChangeCheckbox').checked = false;
+
+            document.getElementById('saveUserBtn').textContent = 'Aggiungi Utente';
+            document.getElementById('cancelUserBtn').style.display = 'none';
             break;
     }
 }
@@ -2885,7 +2981,8 @@ function importDataFromJson(event) {
                 importedData.warehouseJournal && Array.isArray(importedData.warehouseJournal) &&
                 importedData.articles && Array.isArray(importedData.articles) &&
                 importedData.productionPlan && Array.isArray(importedData.productionPlan) &&
-                importedData.notifications && Array.isArray(importedData.notifications)
+                importedData.notifications && Array.isArray(importedData.notifications) &&
+                importedData.users && Array.isArray(importedData.users) // New: check for users array
             ) {
                 // Clear current app data and load new data
                 appData = importedData;
@@ -2900,7 +2997,6 @@ function importDataFromJson(event) {
                 appData.warehouseJournal.forEach(entry => {
                     if (typeof entry.date === 'string') entry.date = new Date(entry.date);
                 });
-
 
                 saveData(); // Save imported data to localStorage
                 updateAllTables(); // Refresh UI with new data
@@ -2928,33 +3024,158 @@ function importDataFromJson(event) {
  */
 function loginUser() {
     const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput'); // New: get password input
     const username = usernameInput.value.trim();
+    const password = passwordInput.value; // Get plain text password
 
-    if (username) {
-        currentUser = username;
-        localStorage.setItem('magliflex-currentUser', currentUser);
+    if (!username || !password) {
+        showNotification('Per favore, inserisci nome utente e password.', 'warning');
+        return;
+    }
+
+    const foundUser = appData.users.find(u => u.username === username && u.password === password); // Authenticate
+
+    if (foundUser) {
+        currentUser = { ...foundUser }; // Store a copy of the user object, including roles
+        localStorage.setItem('magliflex-currentUser', JSON.stringify(currentUser)); // Store entire object
         document.getElementById('loginOverlay').classList.remove('show');
         document.getElementById('appContent').style.display = 'block';
-        loadAndInitializeAppData(); // Load data AFTER successful login
-        showNotification(`Benvenuto, ${currentUser}!`, 'success');
+        showNotification(`Benvenuto, ${currentUser.username}!`, 'success');
         markWelcomeNotificationsAsRead(); // Mark specific notifications as read after adding "Benvenuto"
+        updateNavMenuVisibility(); // Update nav menu visibility immediately after login
+        
+        // Check for forced password change on first login/when flag is set
+        if (currentUser.forcePasswordChange) {
+            showNotification('La tua password deve essere cambiata al primo accesso. Per favore, contatta un amministratore.', 'warning');
+            // In a real app, this would open a "change password" modal
+        }
+        showPage('phases'); // Show default page after login
     } else {
-        showNotification('Per favore, inserisci un nome utente.', 'warning');
+        showNotification('Nome utente o password non validi.', 'error');
     }
 }
 
 /**
  * Gestisce il processo di logout dell'utente.
+ * @param {boolean} showMessage Whether to display a logout success message. Default is true.
  */
-function logoutUser() {
+function logoutUser(showMessage = true) {
     currentUser = null;
     localStorage.removeItem('magliflex-currentUser');
-    // Clear all app data to ensure a fresh start for the next user
-    localStorage.removeItem('magliflex-data'); 
+    localStorage.removeItem('magliflex-data'); // Clear all app data on logout
     resetAppDataToDefaultsAndAddExamples(); // Re-initialize with default/example data
-
     document.getElementById('appContent').style.display = 'none';
     document.getElementById('loginOverlay').classList.add('show');
     document.getElementById('usernameInput').value = ''; // Clear username input
-    showNotification('Logout effettuato con successo.', 'info');
+    document.getElementById('passwordInput').value = ''; // Clear password input
+    if (showMessage) {
+        showNotification('Logout effettuato con successo.', 'info');
+    }
+    updateNavMenuVisibility(); // Update nav menu visibility after logout (hide admin buttons)
+}
+
+// --- NEW: USER MANAGEMENT FUNCTIONS (PLACEHOLDERS) ---
+
+/**
+ * Renders the users table. (To be implemented with actual HTML structure)
+ */
+function updateUsersTable() {
+    const tbody = document.getElementById('usersTableBody'); // Assuming this ID will exist in HTML
+    if (!tbody) {
+        // console.warn("Users table body not found (users page not yet integrated into HTML).");
+        return;
+    }
+    tbody.innerHTML = '';
+
+    if (appData.users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">Nessun utente registrato.</td></tr>';
+        return;
+    }
+
+    appData.users.forEach(user => {
+        const rolesDisplay = user.roles && user.roles.length > 0 ? user.roles.join(', ') : 'Nessuno';
+        const forcePassChangeText = user.forcePasswordChange ? 'Sì' : 'No';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.username}</td>
+            <td>********</td> 
+            <td>${rolesDisplay}</td>
+            <td>${forcePassChangeText}</td>
+            <td>
+                <button class="btn" onclick="editUser(${user.id})">Modifica</button>
+                <button class="btn" onclick="resetUserPassword(${user.id})">Reset Pass</button>
+                <button class="btn" onclick="forcePasswordChangeOnNextLogin(${user.id})">Forza cambio Pass</button>
+                <button class="btn btn-danger" onclick="deleteUser(${user.id})">Elimina</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Handles saving a new user or updating an existing one.
+ */
+function saveUser() {
+    showNotification('Funzione di salvataggio utente non ancora implementata. (Placeholder)', 'info');
+    // Logic for adding/updating user based on currentEditingId.users
+    // Validate inputs (username, password, roles)
+    // Update appData.users and call saveData() and updateAllTables()
+}
+
+/**
+ * Populates the user form for editing.
+ * @param {number} userId The ID of the user to edit.
+ */
+function editUser(userId) {
+    showNotification(`Funzione di modifica utente ${userId} non ancora implementata. (Placeholder)`, 'info');
+    // Find user by ID, populate form fields including roles checkboxes, set currentEditingId.users
+    // Show "Save Changes" button, hide "Add User" button
+}
+
+/**
+ * Deletes a user.
+ * @param {number} userId The ID of the user to delete.
+ */
+function deleteUser(userId) {
+    if (currentUser && currentUser.id === userId) {
+        showNotification('Non puoi eliminare il tuo stesso account mentre sei loggato.', 'error');
+        return;
+    }
+    if (confirm('Sei sicuro di voler eliminare questo utente?')) {
+        appData.users = appData.users.filter(user => user.id !== userId);
+        saveData();
+        updateAllTables();
+        showNotification('Utente eliminato con successo.', 'success');
+    }
+}
+
+/**
+ * Resets a user's password to a default one.
+ * @param {number} userId The ID of the user whose password to reset.
+ */
+function resetUserPassword(userId) {
+    const user = appData.users.find(u => u.id === userId);
+    if (user && confirm(`Sei sicuro di voler resettare la password per l'utente ${user.username}? Verrà impostata una password temporanea casuale.`)) {
+        const newPassword = Math.random().toString(36).substring(2, 10); // Generate a simple temporary password
+        user.password = newPassword; // For simulation, update directly
+        user.forcePasswordChange = true;
+        saveData();
+        updateAllTables();
+        showNotification(`Password per ${user.username} resettata a "${newPassword}". L'utente dovrà cambiarla al prossimo accesso.`, 'warning');
+    }
+}
+
+/**
+ * Sets the forcePasswordChange flag for a user.
+ * @param {number} userId The ID of the user.
+ */
+function forcePasswordChangeOnNextLogin(userId) {
+    const user = appData.users.find(u => u.id === userId);
+    if (user && confirm(`Sei sicuro di voler forzare il cambio password per l'utente ${user.username} al prossimo accesso?`)) {
+        user.forcePasswordChange = true;
+        saveData();
+        updateAllTables();
+        showNotification(`Cambio password forzato impostato per ${user.username}.`, 'info');
+    }
 }
