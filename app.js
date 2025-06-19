@@ -74,46 +74,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Set up barcode input listener
-    document.getElementById('rawMaterialBarcode').addEventListener('keyup', handleBarcodeInput);
+    const rawMaterialBarcode = document.getElementById('rawMaterialBarcode');
+    if (rawMaterialBarcode) { // Ensure element exists before adding listener
+        rawMaterialBarcode.addEventListener('keyup', handleBarcodeInput);
+    } else {
+        console.warn("Elemento 'rawMaterialBarcode' non trovato, impossibile aggiungere listener.");
+    }
 
     // Event listeners for the actual consumption modal
-    document.getElementById('confirmActualConsumptionBtn').addEventListener('click', confirmActualConsumption);
-    document.getElementById('cancelActualConsumptionBtn').addEventListener('click', () => {
-        document.getElementById('actualConsumptionModal').classList.remove('show');
-        currentModalJournalEntryId = null; // Clear the stored ID
-    });
+    const confirmActualConsumptionBtn = document.getElementById('confirmActualConsumptionBtn');
+    if (confirmActualConsumptionBtn) {
+        confirmActualConsumptionBtn.addEventListener('click', confirmActualConsumption);
+    } else {
+        console.warn("Elemento 'confirmActualConsumptionBtn' non trovato.");
+    }
+
+    const cancelActualConsumptionBtn = document.getElementById('cancelActualConsumptionBtn');
+    if (cancelActualConsumptionBtn) {
+        cancelActualConsumptionBtn.addEventListener('click', () => {
+            const modal = document.getElementById('actualConsumptionModal');
+            if (modal) modal.classList.remove('show');
+            currentModalJournalEntryId = null; // Clear the stored ID
+        });
+    } else {
+        console.warn("Elemento 'cancelActualConsumptionBtn' non trovato.");
+    }
 
     // Event listeners for the edit planning modal
-    document.getElementById('saveEditedPlanningBtn').addEventListener('click', saveEditedPlanning);
-    document.getElementById('cancelEditPlanningBtn').addEventListener('click', () => {
-        document.getElementById('editPlanningModal').classList.remove('show');
-        currentEditingId.planning = null; // Clear the stored ID
-        currentCalculatedPlanningDetails = null; // Clear calculated details
-    });
+    const saveEditedPlanningBtn = document.getElementById('saveEditedPlanningBtn');
+    if (saveEditedPlanningBtn) {
+        saveEditedPlanningBtn.addEventListener('click', saveEditedPlanning);
+    } else {
+        console.warn("Elemento 'saveEditedPlanningBtn' non trovato.");
+    }
+
+    const cancelEditPlanningBtn = document.getElementById('cancelEditPlanningBtn');
+    if (cancelEditPlanningBtn) {
+        cancelEditPlanningBtn.addEventListener('click', () => {
+            const modal = document.getElementById('editPlanningModal');
+            if (modal) modal.classList.remove('show');
+            currentEditingId.planning = null; // Clear the stored ID
+            currentCalculatedPlanningDetails = null; // Clear calculated details
+        });
+    } else {
+        console.warn("Elemento 'cancelEditPlanningBtn' non trovato.");
+    }
+
 
     // Event listener for import data file input
-    document.getElementById('importDataFile').addEventListener('change', importDataFromJson);
+    const importDataFile = document.getElementById('importDataFile');
+    if (importDataFile) {
+        importDataFile.addEventListener('change', importDataFromJson);
+    } else {
+        console.warn("Elemento 'importDataFile' non trovato.");
+    }
 
     // Event listener for username input to allow Enter key for login
-    document.getElementById('usernameInput').addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            loginUser();
-        }
-    });
+    const usernameInput = document.getElementById('usernameInput');
+    if (usernameInput) {
+        usernameInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loginUser();
+            }
+        });
+    } else {
+        console.warn("Elemento 'usernameInput' non trovato.");
+    }
 
     // Event listener for password input in login overlay
-    document.getElementById('passwordInput').addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            loginUser();
-        }
-    });
+    const passwordInput = document.getElementById('passwordInput');
+    if (passwordInput) {
+        passwordInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loginUser();
+            }
+        });
+    } else {
+        console.warn("Elemento 'passwordInput' non trovato.");
+    }
+
 
     // Event listener to close the menu if clicking outside
     document.addEventListener('click', function(event) {
         const mainNavMenu = document.getElementById('mainNavMenu');
         const hamburgerBtn = document.querySelector('.hamburger-btn');
-        if (mainNavMenu.classList.contains('open') && !mainNavMenu.contains(event.target) && !hamburgerBtn.contains(event.target)) {
-            toggleNavMenu(); // Close the menu if click is outside of it or the hamburger button
+        if (mainNavMenu && hamburgerBtn) { // Check for existence
+            if (mainNavMenu.classList.contains('open') && !mainNavMenu.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+                toggleNavMenu(); // Close the menu if click is outside of it or the hamburger button
+            }
         }
     });
 
@@ -177,8 +225,10 @@ function loadAndInitializeAppData() {
     
     // Update all tables and UI elements after data is loaded (this is critical)
     updateAllTables();
-    document.getElementById('rawMaterialLoadDate').valueAsDate = new Date();
-    document.getElementById('planningStartDate').valueAsDate = new Date();
+    const rawMaterialLoadDate = document.getElementById('rawMaterialLoadDate');
+    if (rawMaterialLoadDate) rawMaterialLoadDate.valueAsDate = new Date();
+    const planningStartDate = document.getElementById('planningStartDate');
+    if (planningStartDate) planningStartDate.valueAsDate = new Date();
     // Do NOT show a page yet, wait for login to show content
     // showPage('phases'); 
     console.log("loadAndInitializeAppData: UI aggiornata dopo il caricamento dati.");
@@ -538,7 +588,7 @@ function showPage(pageId) {
     // Close the navigation menu when a page is selected (for mobile)
     const mainNavMenu = document.getElementById('mainNavMenu');
     const hamburgerBtn = document.querySelector('.hamburger-btn');
-    if (mainNavMenu.classList.contains('open')) {
+    if (mainNavMenu && hamburgerBtn && mainNavMenu.classList.contains('open')) { // Check for existence
         mainNavMenu.classList.remove('open');
         hamburgerBtn.classList.remove('open');
         console.log("showPage: Menu di navigazione chiuso.");
@@ -567,8 +617,10 @@ function showPage(pageId) {
         updateWarehouseJournalTable();
         updateRawMaterialSelectOptions(); 
         cancelEdit('rawMaterials'); // Clear form and reset editing state
-        document.getElementById('rawMaterialLoadDate').valueAsDate = new Date(); // Reset load date
-        document.getElementById('rawMaterialBarcode').value = ''; // Clear barcode input
+        const rawMaterialLoadDate = document.getElementById('rawMaterialLoadDate');
+        if (rawMaterialLoadDate) rawMaterialLoadDate.valueAsDate = new Date(); // Reset load date
+        const rawMaterialBarcode = document.getElementById('rawMaterialBarcode');
+        if (rawMaterialBarcode) rawMaterialBarcode.value = ''; // Clear barcode input
     }
     if (pageId === 'phases') {
         updatePhasesTable();
@@ -622,9 +674,11 @@ function updateNavMenuVisibility() {
 function toggleNavMenu() {
     const mainNavMenu = document.getElementById('mainNavMenu');
     const hamburgerBtn = document.querySelector('.hamburger-btn');
-    mainNavMenu.classList.toggle('open');
-    hamburgerBtn.classList.toggle('open');
-    console.log("toggleNavMenu: Menu di navigazione aperto/chiuso.");
+    if (mainNavMenu && hamburgerBtn) { // Check for existence
+        mainNavMenu.classList.toggle('open');
+        hamburgerBtn.classList.toggle('open');
+        console.log("toggleNavMenu: Menu di navigazione aperto/chiuso.");
+    }
 }
 
 
@@ -721,9 +775,15 @@ function closeNotificationsModal() {
  */
 function filterNotifications(filter) {
     currentNotificationFilter = filter;
-    document.getElementById('filterUnread').classList.remove('active');
-    document.getElementById('filterAll').classList.remove('active');
-    document.getElementById(`filter${capitalizeFirstLetter(filter)}`).classList.add('active');
+    const filterUnreadBtn = document.getElementById('filterUnread');
+    const filterAllBtn = document.getElementById('filterAll');
+
+    if (filterUnreadBtn) filterUnreadBtn.classList.remove('active');
+    if (filterAllBtn) filterAllBtn.classList.remove('active');
+    
+    const activeFilterBtn = document.getElementById(`filter${capitalizeFirstLetter(filter)}`);
+    if (activeFilterBtn) activeFilterBtn.classList.add('active');
+
     renderNotifications();
     console.log(`filterNotifications: Filtro impostato su "${filter}".`);
 }
@@ -754,7 +814,7 @@ function renderNotifications() {
         itemDiv.innerHTML = `
             <div class="notification-item-content">
                 <strong>${n.message}</strong>
-                <small>${new Date(n.timestamp).toLocaleString('it-IT')}</small>
+                <small>${new Date(n.timestamp).toLocaleDateString('it-IT')} ${new Date(n.timestamp).toLocaleTimeString('it-IT')}</small>
             </div>
             <button onclick="markNotificationRead(${n.id})">Sana</button>
         `;
@@ -792,7 +852,17 @@ function cancelEdit(entityType) {
     const cancelBtn = document.getElementById(`cancel${capitalizeFirstLetter(entityType)}Btn`);
 
     if (saveBtn) {
-        saveBtn.textContent = `Aggiungi ${capitalizeFirstLetter(entityType).slice(0, -1)}`; // e.g., "Add Phase"
+        // Handle plural/singular for button text, assuming common Italian plural forms
+        let buttonText = `Aggiungi ${capitalizeFirstLetter(entityType).slice(0, -1)}`; // Default for 'e' plurals (Fase -> Fas, Macchina -> Macchin)
+        if (entityType === 'phases') buttonText = 'Aggiungi Fase';
+        else if (entityType === 'machines') buttonText = 'Aggiungi Macchinario';
+        else if (entityType === 'departments') buttonText = 'Aggiungi Reparto';
+        else if (entityType === 'rawMaterials') buttonText = 'Aggiungi Materia Prima';
+        else if (entityType === 'articles') buttonText = 'Aggiungi Articolo';
+        else if (entityType === 'planning') buttonText = 'Aggiungi alla Pianificazione';
+        else if (entityType === 'users') buttonText = 'Aggiungi Utente';
+
+        saveBtn.textContent = buttonText;
     } else {
         // console.warn(`cancelEdit: Save button for ${entityType} not found.`);
     }
@@ -805,52 +875,86 @@ function cancelEdit(entityType) {
     // Specific resets for each entity type
     switch(entityType) {
         case 'phases':
-            document.getElementById('phaseName').value = '';
-            document.getElementById('phaseTime').value = '';
+            const phaseName = document.getElementById('phaseName');
+            const phaseTime = document.getElementById('phaseTime');
+            if (phaseName) phaseName.value = '';
+            if (phaseTime) phaseTime.value = '';
             break;
         case 'machines':
-            document.getElementById('machineName').value = '';
-            document.getElementById('machineCapacity').value = '';
+            const machineName = document.getElementById('machineName');
+            const machineCapacity = document.getElementById('machineCapacity');
+            if (machineName) machineName.value = '';
+            if (machineCapacity) machineCapacity.value = '';
             break;
         case 'departments':
-            document.getElementById('departmentId').value = 'new';
-            document.getElementById('departmentName').value = '';
-            document.getElementById('departmentMachineTypes').value = '';
-            document.getElementById('departmentFinenesses').value = '';
+            const departmentId = document.getElementById('departmentId');
+            const departmentName = document.getElementById('departmentName');
+            const departmentMachineTypes = document.getElementById('departmentMachineTypes');
+            const departmentFinenesses = document.getElementById('departmentFinenesses');
+            const departmentPhaseIds = document.getElementById('departmentPhaseIds');
+            if (departmentId) departmentId.value = 'new';
+            if (departmentName) departmentName.value = '';
+            if (departmentMachineTypes) departmentMachineTypes.value = '';
+            if (departmentFinenesses) departmentFinenesses.value = '';
             // Clear all selected options in multi-select
-            Array.from(document.getElementById('departmentPhaseIds').options).forEach(option => option.selected = false);
+            if (departmentPhaseIds) {
+                Array.from(departmentPhaseIds.options).forEach(option => option.selected = false);
+            }
             break;
         case 'rawMaterials':
-            document.getElementById('rawMaterialSelect').value = 'new';
-            document.getElementById('newRawMaterialName').value = '';
-            document.getElementById('rawMaterialUnit').value = '';
-            document.getElementById('rawMaterialQuantity').value = '';
-            document.getElementById('rawMaterialLoadDate').valueAsDate = new Date(); // Reset to today
-            document.getElementById('rawMaterialBarcode').value = ''; // Clear barcode input
+            const rawMaterialSelect = document.getElementById('rawMaterialSelect');
+            const newRawMaterialName = document.getElementById('newRawMaterialName');
+            const rawMaterialUnit = document.getElementById('rawMaterialUnit');
+            const rawMaterialQuantity = document.getElementById('rawMaterialQuantity');
+            const rawMaterialLoadDate = document.getElementById('rawMaterialLoadDate');
+            const rawMaterialBarcode = document.getElementById('rawMaterialBarcode');
+            const newRawMaterialNameGroup = document.getElementById('newRawMaterialNameGroup');
+
+            if (rawMaterialSelect) rawMaterialSelect.value = 'new';
+            if (newRawMaterialName) newRawMaterialName.value = '';
+            if (rawMaterialUnit) rawMaterialUnit.value = '';
+            if (rawMaterialQuantity) rawMaterialQuantity.value = '';
+            if (rawMaterialLoadDate) rawMaterialLoadDate.valueAsDate = new Date(); // Reset to today
+            if (rawMaterialBarcode) rawMaterialBarcode.value = ''; // Clear barcode input
             // Explicitly set visibility based on 'new' value here
-            document.getElementById('newRawMaterialNameGroup').style.display = 'block';
-            document.getElementById('saveRawMaterialBtn').textContent = 'Aggiungi Materia Prima';
-            document.getElementById('cancelRawMaterialBtn').style.display = 'none';
+            if (newRawMaterialNameGroup) newRawMaterialNameGroup.style.display = 'block';
             currentEditingId.rawMaterials = null; // Ensure editing state is reset
             break;
         case 'articles':
-            document.getElementById('articleId').value = 'new';
-            document.getElementById('articleCode').value = '';
-            document.getElementById('articleDescription').value = '';
-            document.getElementById('articleColor').value = '';
-            document.getElementById('articleClient').value = '';
-            document.getElementById('cycleSteps').innerHTML = '';
-            document.getElementById('bomItems').innerHTML = '';
+            const articleId = document.getElementById('articleId');
+            const articleCode = document.getElementById('articleCode');
+            const articleDescription = document.getElementById('articleDescription');
+            const articleColor = document.getElementById('articleColor');
+            const articleClient = document.getElementById('articleClient');
+            const cycleStepsDiv = document.getElementById('cycleSteps');
+            const bomItemsDiv = document.getElementById('bomItems');
+
+            if (articleId) articleId.value = 'new';
+            if (articleCode) articleCode.value = '';
+            if (articleDescription) articleDescription.value = '';
+            if (articleColor) articleColor.value = '';
+            if (articleClient) articleClient.value = '';
+            if (cycleStepsDiv) cycleStepsDiv.innerHTML = '';
+            if (bomItemsDiv) bomItemsDiv.innerHTML = '';
             break;
         case 'planning':
-            document.getElementById('planningLotId').value = 'new';
-            document.getElementById('planningArticle').value = '';
-            document.getElementById('planningQuantity').value = '';
-            document.getElementById('planningType').value = 'production'; // Default to production
-            document.getElementById('planningPriority').value = 'medium';
-            document.getElementById('planningNotes').value = '';
-            document.getElementById('planningStartDate').valueAsDate = new Date();
-            document.getElementById('deliveryResult').innerHTML = '<p>Seleziona un articolo e una quantità per calcolare la data di consegna stimata.</p>';
+            const planningLotId = document.getElementById('planningLotId');
+            const planningArticle = document.getElementById('planningArticle');
+            const planningQuantity = document.getElementById('planningQuantity');
+            const planningType = document.getElementById('planningType');
+            const planningPriority = document.getElementById('planningPriority');
+            const planningNotes = document.getElementById('planningNotes');
+            const planningStartDate = document.getElementById('planningStartDate');
+            const deliveryResult = document.getElementById('deliveryResult');
+
+            if (planningLotId) planningLotId.value = 'new';
+            if (planningArticle) planningArticle.value = '';
+            if (planningQuantity) planningQuantity.value = '';
+            if (planningType) planningType.value = 'production'; // Default to production
+            if (planningPriority) planningPriority.value = 'medium';
+            if (planningNotes) planningNotes.value = '';
+            if (planningStartDate) planningStartDate.valueAsDate = new Date();
+            if (deliveryResult) deliveryResult.innerHTML = '<p>Seleziona un articolo e una quantità per calcolare la data di consegna stimata.</p>';
             break;
         case 'users': // New: for users page
             const usernameInputForm = document.getElementById('usernameInputForm');
@@ -866,9 +970,6 @@ function cancelEdit(entityType) {
                 });
             }
             if (forcePasswordChangeCheckbox) forcePasswordChangeCheckbox.checked = false;
-
-            if (saveBtn) saveBtn.textContent = 'Aggiungi Utente';
-            if (cancelBtn) cancelBtn.style.display = 'none';
             break;
     }
     console.log(`cancelEdit: Form per ${entityType} resettato.`);
@@ -890,8 +991,16 @@ function capitalizeFirstLetter(string) {
  * Handles adding a new phase or updating an existing one.
  */
 function addPhase() {
-    const name = document.getElementById('phaseName').value.trim();
-    const time = parseInt(document.getElementById('phaseTime').value);
+    const nameInput = document.getElementById('phaseName');
+    const timeInput = document.getElementById('phaseTime');
+    
+    if (!nameInput || !timeInput) {
+        showNotification('Errore: Impossibile trovare i campi per Fase.', 'error');
+        return;
+    }
+
+    const name = nameInput.value.trim();
+    const time = parseInt(timeInput.value);
     
     if (!name || isNaN(time) || time <= 0) {
         showNotification('Inserisci un nome fase e un tempo di lavorazione valido (maggiore di 0).', 'error');
@@ -937,10 +1046,15 @@ function editPhase(id) {
     const phase = appData.phases.find(p => p.id === id);
     if (phase) {
         currentEditingId.phases = id;
-        document.getElementById('phaseName').value = phase.name;
-        document.getElementById('phaseTime').value = phase.time;
-        document.getElementById('savePhaseBtn').textContent = 'Salva Modifiche';
-        document.getElementById('cancelPhaseBtn').style.display = 'inline-block';
+        const phaseName = document.getElementById('phaseName');
+        const phaseTime = document.getElementById('phaseTime');
+        const savePhaseBtn = document.getElementById('savePhaseBtn');
+        const cancelPhaseBtn = document.getElementById('cancelPhaseBtn');
+
+        if (phaseName) phaseName.value = phase.name;
+        if (phaseTime) phaseTime.value = phase.time;
+        if (savePhaseBtn) savePhaseBtn.textContent = 'Salva Modifiche';
+        if (cancelPhaseBtn) cancelPhaseBtn.style.display = 'inline-block';
     } else {
         showNotification('Fase non trovata per la modifica.', 'error');
     }
@@ -1011,8 +1125,16 @@ function deletePhase(id) {
  * Handles adding a new machine or updating an existing one.
  */
 function addMachine() {
-    const name = document.getElementById('machineName').value.trim();
-    const capacity = parseInt(document.getElementById('machineCapacity').value);
+    const nameInput = document.getElementById('machineName');
+    const capacityInput = document.getElementById('machineCapacity');
+
+    if (!nameInput || !capacityInput) {
+        showNotification('Errore: Impossibile trovare i campi per Macchinario.', 'error');
+        return;
+    }
+
+    const name = nameInput.value.trim();
+    const capacity = parseInt(capacityInput.value);
     
     if (!name || isNaN(capacity) || capacity <= 0) {
         showNotification('Inserisci un nome macchinario e una capacità giornaliera valida (maggiore di 0).', 'error');
@@ -1068,10 +1190,15 @@ function editMachine(id) {
     const machine = appData.machines.find(m => m.id === id);
     if (machine) {
         currentEditingId.machines = id;
-        document.getElementById('machineName').value = machine.name;
-        document.getElementById('machineCapacity').value = machine.capacity;
-        document.getElementById('saveMachineBtn').textContent = 'Salva Modifiche';
-        document.getElementById('cancelMachineBtn').style.display = 'inline-block';
+        const machineName = document.getElementById('machineName');
+        const machineCapacity = document.getElementById('machineCapacity');
+        const saveMachineBtn = document.getElementById('saveMachineBtn');
+        const cancelMachineBtn = document.getElementById('cancelMachineBtn');
+
+        if (machineName) machineName.value = machine.name;
+        if (machineCapacity) machineCapacity.value = machine.capacity;
+        if (saveMachineBtn) saveMachineBtn.textContent = 'Salva Modifiche';
+        if (cancelMachineBtn) cancelMachineBtn.style.display = 'inline-block';
     } else {
         showNotification('Macchinario non trovato per la modifica.', 'error');
     }
@@ -1174,15 +1301,18 @@ function updateDepartmentPhaseSelectOptions() {
  * Carica i dati del reparto selezionato nel modulo per la modifica.
  */
 function loadDepartmentForEdit() {
-    const selectedId = document.getElementById('departmentId').value;
+    const selectedId = document.getElementById('departmentId')?.value; // Use optional chaining
     const nameInput = document.getElementById('departmentName');
     const machineTypesInput = document.getElementById('departmentMachineTypes');
     const finenessesInput = document.getElementById('departmentFinenesses');
     const phaseIdsSelect = document.getElementById('departmentPhaseIds');
 
-    if (!nameInput || !machineTypesInput || !finenessesInput || !phaseIdsSelect) return; // Add null checks
+    if (!nameInput || !machineTypesInput || !finenessesInput || !phaseIdsSelect) {
+        console.warn("loadDepartmentForEdit: Uno o più elementi del form reparto non trovati.");
+        return;
+    }
 
-    if (selectedId === 'new') {
+    if (selectedId === 'new' || selectedId === undefined) { // Check for undefined as well
         cancelEdit('departments');
     } else {
         const dept = appData.departments.find(d => d.id == selectedId);
@@ -1197,8 +1327,10 @@ function loadDepartmentForEdit() {
                 option.selected = dept.phaseIds.includes(parseInt(option.value));
             });
 
-            document.getElementById('saveDepartmentBtn').textContent = 'Salva Modifiche Reparto';
-            document.getElementById('cancelDepartmentBtn').style.display = 'inline-block';
+            const saveDepartmentBtn = document.getElementById('saveDepartmentBtn');
+            const cancelDepartmentBtn = document.getElementById('cancelDepartmentBtn');
+            if (saveDepartmentBtn) saveDepartmentBtn.textContent = 'Salva Modifiche Reparto';
+            if (cancelDepartmentBtn) cancelDepartmentBtn.style.display = 'inline-block';
         } else {
             showNotification('Reparto selezionato non trovato.', 'error');
             cancelEdit('departments');
@@ -1210,15 +1342,20 @@ function loadDepartmentForEdit() {
  * Salva un nuovo reparto o aggiorna un reparto esistente.
  */
 function saveDepartment() {
-    const name = document.getElementById('departmentName').value.trim();
-    const machineTypesInput = document.getElementById('departmentMachineTypes').value.trim();
-    const finenessesInput = document.getElementById('departmentFinenesses').value.trim();
+    const nameInput = document.getElementById('departmentName');
+    const machineTypesInputElem = document.getElementById('departmentMachineTypes');
+    const finenessesInputElem = document.getElementById('departmentFinenesses');
     const phaseIdsSelect = document.getElementById('departmentPhaseIds');
 
-    if (!name || !machineTypesInput || !finenessesInput || !phaseIdsSelect) { // Add null checks
+    if (!nameInput || !machineTypesInputElem || !finenessesInputElem || !phaseIdsSelect) {
         showNotification('Assicurati che tutti i campi del modulo reparto siano presenti.', 'error');
         return;
     }
+
+    const name = nameInput.value.trim();
+    const machineTypesInput = machineTypesInputElem.value.trim();
+    const finenessesInput = finenessesInputElem.value.trim();
+
 
     if (!name) {
         showNotification('Il nome del reparto è obbligatorio.', 'error');
@@ -1339,8 +1476,11 @@ function updateDepartmentsTable() {
 
 // Helper to load department for editing directly from table button click
 function editDepartment(id) {
-    document.getElementById('departmentId').value = id;
-    loadDepartmentForEdit();
+    const departmentIdSelect = document.getElementById('departmentId');
+    if (departmentIdSelect) {
+        departmentIdSelect.value = id;
+        loadDepartmentForEdit();
+    }
 }
 
 
@@ -1369,11 +1509,11 @@ function toggleNewRawMaterialInput() {
     const select = document.getElementById('rawMaterialSelect');
     const newNameGroup = document.getElementById('newRawMaterialNameGroup');
     const unitInput = document.getElementById('rawMaterialUnit');
-    const barcodeInput = document.getElementById('rawMaterialBarcode'); // Get barcode input
+    // const barcodeInput = document.getElementById('rawMaterialBarcode'); // Get barcode input
     const saveBtn = document.getElementById('saveRawMaterialBtn');
     const cancelBtn = document.getElementById('cancelRawMaterialBtn');
 
-    if (!select || !newNameGroup || !unitInput || !barcodeInput || !saveBtn || !cancelBtn) { // Add null checks
+    if (!select || !newNameGroup || !unitInput || !saveBtn || !cancelBtn) { // Add null checks, removed barcodeInput from here
         console.warn("toggleNewRawMaterialInput: Uno o più elementi del form materia prima non trovati.");
         return;
     }
@@ -1387,7 +1527,8 @@ function toggleNewRawMaterialInput() {
         currentEditingId.rawMaterials = null; // Ensure editing state is reset
     } else {
         newNameGroup.style.display = 'none';
-        document.getElementById('newRawMaterialName').value = ''; 
+        const newRawMaterialName = document.getElementById('newRawMaterialName');
+        if (newRawMaterialName) newRawMaterialName.value = ''; 
         const selectedRm = appData.rawMaterials.find(rm => rm.id == select.value);
         if (selectedRm) {
             unitInput.value = selectedRm.unit; 
@@ -1398,7 +1539,8 @@ function toggleNewRawMaterialInput() {
             cancelBtn.style.display = 'inline-block';
         }
     }
-    document.getElementById('rawMaterialQuantity').value = ''; // Always clear quantity input on toggle
+    const rawMaterialQuantity = document.getElementById('rawMaterialQuantity');
+    if (rawMaterialQuantity) rawMaterialQuantity.value = ''; // Always clear quantity input on toggle
 }
 
 /**
@@ -1419,7 +1561,8 @@ function handleBarcodeInput(event) {
                 toggleNewRawMaterialInput(); // This will select the matched RM
                 showNotification(`Materia prima "${matchedRm.name}" selezionata tramite barcode.`, 'info');
                 barcodeInput.value = ''; // Clear barcode for next scan
-                document.getElementById('rawMaterialQuantity').focus(); // Focus quantity for quick entry
+                const rawMaterialQuantity = document.getElementById('rawMaterialQuantity');
+                if (rawMaterialQuantity) rawMaterialQuantity.focus(); // Focus quantity for quick entry
             } else {
                 // If no match, and the "new" option is selected, keep barcode input
                 if (rawMaterialSelect.value === 'new') {
@@ -1439,12 +1582,25 @@ function handleBarcodeInput(event) {
  * Aggiunge una nuova materia prima o aggiorna la scorta di una esistente.
  */
 function addRawMaterialOrStock() {
-    const selectedRmId = document.getElementById('rawMaterialSelect').value;
-    const newRmName = document.getElementById('newRawMaterialName').value.trim();
-    const unit = document.getElementById('rawMaterialUnit').value.trim();
-    const quantity = parseFloat(document.getElementById('rawMaterialQuantity').value);
-    const loadDate = document.getElementById('rawMaterialLoadDate').value;
-    const barcode = document.getElementById('rawMaterialBarcode').value.trim(); // Get barcode
+    const rawMaterialSelect = document.getElementById('rawMaterialSelect');
+    const newRawMaterialName = document.getElementById('newRawMaterialName');
+    const rawMaterialUnit = document.getElementById('rawMaterialUnit');
+    const rawMaterialQuantity = document.getElementById('rawMaterialQuantity');
+    const rawMaterialLoadDate = document.getElementById('rawMaterialLoadDate');
+    const rawMaterialBarcode = document.getElementById('rawMaterialBarcode'); // Get barcode
+
+    if (!rawMaterialSelect || !newRawMaterialName || !rawMaterialUnit || !rawMaterialQuantity || !rawMaterialLoadDate || !rawMaterialBarcode) {
+        showNotification('Errore: Impossibile trovare tutti i campi del modulo Materie Prime.', 'error');
+        return;
+    }
+
+
+    const selectedRmId = rawMaterialSelect.value;
+    const newRmName = newRawMaterialName.value.trim();
+    const unit = rawMaterialUnit.value.trim();
+    const quantity = parseFloat(rawMaterialQuantity.value);
+    const loadDate = rawMaterialLoadDate.value;
+    const barcode = rawMaterialBarcode.value.trim(); // Get barcode
 
     if (!loadDate) {
         showNotification('Seleziona una data di carico.', 'error');
@@ -1516,7 +1672,8 @@ function editRawMaterial(id) {
             select.value = id;
             toggleNewRawMaterialInput(); // This will pre-fill unit and hide new name field
             // Name is not directly editable in the update form, only unit and quantity
-            document.getElementById('rawMaterialQuantity').value = 0; // Set to 0 to indicate quantity to add
+            const rawMaterialQuantity = document.getElementById('rawMaterialQuantity');
+            if (rawMaterialQuantity) rawMaterialQuantity.value = 0; // Set to 0 to indicate quantity to add
         } else {
             console.warn("editRawMaterial: rawMaterialSelect non trovato.");
         }
@@ -1696,8 +1853,12 @@ function openActualConsumptionModal(journalEntryId) {
  * Confirms and applies the actual consumed quantity from the modal.
  */
 function confirmActualConsumption() {
-    const actualQtyInput = document.getElementById('actualConsumedQuantity').value;
-    const actualQuantity = parseFloat(actualQtyInput);
+    const actualConsumedQuantityInput = document.getElementById('actualConsumedQuantity');
+    if (!actualConsumedQuantityInput) {
+        showNotification('Errore: Campo quantità effettiva non trovato.', 'error');
+        return;
+    }
+    const actualQuantity = parseFloat(actualConsumedQuantityInput.value);
 
     if (isNaN(actualQuantity) || actualQuantity < 0) {
         showNotification('Quantità effettiva non valida. Riprova.', 'error');
@@ -1732,7 +1893,8 @@ function confirmActualConsumption() {
     saveData();
     updateAllTables(); 
     showNotification(`Consumo effettivo per "${rawMaterial.name}" aggiornato a ${actualQuantity.toFixed(2)} ${rawMaterial.unit}.`, 'success');
-    document.getElementById('actualConsumptionModal').classList.remove('show');
+    const actualConsumptionModal = document.getElementById('actualConsumptionModal');
+    if (actualConsumptionModal) actualConsumptionModal.classList.remove('show');
     currentModalJournalEntryId = null; // Clear the stored ID
 }
 
@@ -1800,7 +1962,7 @@ function updateArticleSelectOptions() {
  * Carica i dati di un articolo nel modulo per la modifica.
  */
 function loadArticleForEdit() {
-    const selectedId = document.getElementById('articleId').value;
+    const selectedId = document.getElementById('articleId')?.value; // Use optional chaining
     const codeInput = document.getElementById('articleCode');
     const descriptionInput = document.getElementById('articleDescription');
     const colorInput = document.getElementById('articleColor');
@@ -1813,7 +1975,7 @@ function loadArticleForEdit() {
         return;
     }
 
-    if (selectedId === 'new') {
+    if (selectedId === 'new' || selectedId === undefined) { // Check for undefined as well
         cancelEdit('articles');
     } else {
         const article = appData.articles.find(a => a.id == selectedId);
@@ -1833,9 +1995,13 @@ function loadArticleForEdit() {
                 addCycleStep(); // Add a new empty step row
                 const lastStepDiv = cycleStepsDiv.lastElementChild;
                 if (lastStepDiv) { // Add null check
-                    lastStepDiv.querySelector('.phase-select').value = step.phaseId;
-                    lastStepDiv.querySelector('.machine-type-select').value = step.machineType;
-                    lastStepDiv.querySelector('.fineness-select').value = step.fineness;
+                    const phaseSelect = lastStepDiv.querySelector('.phase-select');
+                    const machineTypeSelect = lastStepDiv.querySelector('.machine-type-select');
+                    const finenessSelect = lastStepDiv.querySelector('.fineness-select');
+
+                    if (phaseSelect) phaseSelect.value = step.phaseId;
+                    if (machineTypeSelect) machineTypeSelect.value = step.machineType;
+                    if (finenessSelect) finenessSelect.value = step.fineness;
                 }
             });
 
@@ -1844,13 +2010,18 @@ function loadArticleForEdit() {
                 addBomItem(); // Add a new empty BOM row
                 const lastBomDiv = bomItemsDiv.lastElementChild;
                 if (lastBomDiv) { // Add null check
-                    lastBomDiv.querySelector('.raw-material-select').value = item.rawMaterialId;
-                    lastBomDiv.querySelector('.quantity-per-piece-input').value = item.quantityPerPiece;
+                    const rawMaterialSelect = lastBomDiv.querySelector('.raw-material-select');
+                    const quantityPerPieceInput = lastBomDiv.querySelector('.quantity-per-piece-input');
+                    
+                    if (rawMaterialSelect) rawMaterialSelect.value = item.rawMaterialId;
+                    if (quantityPerPieceInput) quantityPerPieceInput.value = item.quantityPerPiece;
                 }
             });
 
-            document.getElementById('saveArticleBtn').textContent = 'Salva Modifiche Articolo';
-            document.getElementById('cancelArticleBtn').style.display = 'inline-block';
+            const saveArticleBtn = document.getElementById('saveArticleBtn');
+            const cancelArticleBtn = document.getElementById('cancelArticleBtn');
+            if (saveArticleBtn) saveArticleBtn.textContent = 'Salva Modifiche Articolo';
+            if (cancelArticleBtn) cancelArticleBtn.style.display = 'inline-block';
         } else {
             showNotification('Articolo selezionato non trovato.', 'error');
             cancelEdit('articles');
@@ -1951,22 +2122,39 @@ function removeBomItem(button) {
  * Salva un nuovo articolo o aggiorna un articolo esistente.
  */
 function saveArticle() {
-    const articleId = document.getElementById('articleId').value;
-    const code = document.getElementById('articleCode').value.trim();
-    const description = document.getElementById('articleDescription').value.trim();
-    const color = document.getElementById('articleColor').value.trim();
-    const client = document.getElementById('articleClient').value.trim();
+    const articleIdSelect = document.getElementById('articleId');
+    const codeInput = document.getElementById('articleCode');
+    const descriptionInput = document.getElementById('articleDescription');
+    const colorInput = document.getElementById('articleColor');
+    const clientInput = document.getElementById('articleClient');
+    const cycleStepsDiv = document.getElementById('cycleSteps');
+    const bomItemsDiv = document.getElementById('bomItems');
+
+    if (!articleIdSelect || !codeInput || !descriptionInput || !colorInput || !clientInput || !cycleStepsDiv || !bomItemsDiv) {
+        showNotification('Errore: Impossibile trovare tutti i campi del modulo Articoli.', 'error');
+        return;
+    }
+
+    const articleId = articleIdSelect.value;
+    const code = codeInput.value.trim();
+    const description = descriptionInput.value.trim();
+    const color = colorInput.value.trim();
+    const client = clientInput.value.trim();
     
     if (!code || !description) {
         showNotification('Codice e Descrizione articolo sono obbligatori.', 'error');
         return;
     }
     
-    const cycleStepsElements = Array.from(document.querySelectorAll('.cycle-step'));
+    const cycleStepsElements = Array.from(cycleStepsDiv.querySelectorAll('.cycle-step'));
     const cycleSteps = cycleStepsElements.map(step => {
-        const phaseId = parseInt(step.querySelector('.phase-select').value);
-        const machineType = step.querySelector('.machine-type-select').value;
-        const fineness = parseInt(step.querySelector('.fineness-select').value);
+        const phaseSelect = step.querySelector('.phase-select');
+        const machineTypeSelect = step.querySelector('.machine-type-select');
+        const finenessSelect = step.querySelector('.fineness-select');
+
+        const phaseId = phaseSelect ? parseInt(phaseSelect.value) : NaN;
+        const machineType = machineTypeSelect ? machineTypeSelect.value : '';
+        const fineness = finenessSelect ? parseInt(finenessSelect.value) : NaN;
 
         return { phaseId, machineType, fineness };
     }).filter(step => !isNaN(step.phaseId) && step.machineType && !isNaN(step.fineness)); 
@@ -1987,10 +2175,14 @@ function saveArticle() {
         }
     }
 
-    const bomItemsElements = Array.from(document.querySelectorAll('.bom-item'));
+    const bomItemsElements = Array.from(bomItemsDiv.querySelectorAll('.bom-item'));
     const bom = bomItemsElements.map(item => {
-        const rawMaterialId = parseInt(item.querySelector('.raw-material-select').value);
-        const quantityPerPiece = parseFloat(item.querySelector('.quantity-per-piece-input').value);
+        const rawMaterialSelect = item.querySelector('.raw-material-select');
+        const quantityPerPieceInput = item.querySelector('.quantity-per-piece-input');
+
+        const rawMaterialId = rawMaterialSelect ? parseInt(rawMaterialSelect.value) : NaN;
+        const quantityPerPiece = quantityPerPieceInput ? parseFloat(quantityPerPieceInput.value) : NaN;
+        
         return { rawMaterialId, quantityPerPiece };
     }).filter(item => !isNaN(item.rawMaterialId) && !isNaN(item.quantityPerPiece) && item.quantityPerPiece > 0);
 
@@ -2086,8 +2278,11 @@ function updateArticlesTable() {
 
 // Helper to load article for editing directly from table button click
 function editArticle(id) {
-    document.getElementById('articleId').value = id;
-    loadArticleForEdit();
+    const articleIdSelect = document.getElementById('articleId');
+    if (articleIdSelect) {
+        articleIdSelect.value = id;
+        loadArticleForEdit();
+    }
 }
 
 /**
@@ -2163,7 +2358,7 @@ function updatePlanningLotSelectOptions() {
  * Carica i dati di un lotto di pianificazione nel modulo per la modifica.
  */
 function loadPlanningForEdit() {
-    const selectedId = document.getElementById('planningLotId').value;
+    const selectedId = document.getElementById('planningLotId')?.value; // Use optional chaining
     const articleSelect = document.getElementById('planningArticle');
     const quantityInput = document.getElementById('planningQuantity');
     const typeSelect = document.getElementById('planningType'); // New
@@ -2177,10 +2372,11 @@ function loadPlanningForEdit() {
         return;
     }
 
-    if (selectedId === 'new') {
+    if (selectedId === 'new' || selectedId === undefined) { // Check for undefined as well
         cancelEdit('planning');
         // Ensure date input is today for new plans
-        document.getElementById('planningStartDate').valueAsDate = new Date();
+        const planningStartDate = document.getElementById('planningStartDate');
+        if (planningStartDate) planningStartDate.valueAsDate = new Date();
     } else {
         const plan = appData.productionPlan.find(p => p.id == selectedId);
         if (plan) {
@@ -2612,13 +2808,26 @@ function openEditPlanningModal(planId) {
  * Salva le modifiche da editPlanningModal.
  */
 function saveEditedPlanning() {
-    const planId = parseInt(document.getElementById('editPlanningLotId').value);
-    const articleId = parseInt(document.getElementById('editPlanningArticle').value);
-    const quantity = parseInt(document.getElementById('editPlanningQuantity').value);
-    const type = document.getElementById('editPlanningType').value;
-    const priority = document.getElementById('editPlanningPriority').value;
-    const notes = document.getElementById('editPlanningNotes').value.trim();
-    const startDate = document.getElementById('editPlanningStartDate').value;
+    const editPlanningLotId = document.getElementById('editPlanningLotId');
+    const editPlanningArticle = document.getElementById('editPlanningArticle');
+    const editPlanningQuantity = document.getElementById('editPlanningQuantity');
+    const editPlanningType = document.getElementById('editPlanningType');
+    const editPlanningPriority = document.getElementById('editPlanningPriority');
+    const editPlanningNotes = document.getElementById('editPlanningNotes');
+    const editPlanningStartDate = document.getElementById('editPlanningStartDate');
+
+    if (!editPlanningLotId || !editPlanningArticle || !editPlanningQuantity || !editPlanningType || !editPlanningPriority || !editPlanningNotes || !editPlanningStartDate) {
+        showNotification('Errore: Impossibile trovare tutti i campi del modale di modifica pianificazione.', 'error');
+        return;
+    }
+
+    const planId = parseInt(editPlanningLotId.value);
+    const articleId = parseInt(editPlanningArticle.value);
+    const quantity = parseInt(editPlanningQuantity.value);
+    const type = editPlanningType.value;
+    const priority = editPlanningPriority.value;
+    const notes = editPlanningNotes.value.trim();
+    const startDate = editPlanningStartDate.value;
 
     // Basic validation
     if (!articleId || isNaN(quantity) || quantity <= 0 || !startDate) {
@@ -2636,7 +2845,8 @@ function saveEditedPlanning() {
         
         // Call the main savePlanning function to handle update logic
         savePlanning(); 
-        document.getElementById('editPlanningModal').classList.remove('show');
+        const editPlanningModal = document.getElementById('editPlanningModal');
+        if (editPlanningModal) editPlanningModal.classList.remove('show');
         currentEditingId.planning = null; // Reset editing state
         currentCalculatedPlanningDetails = null;
     } else {
@@ -3248,7 +3458,7 @@ function loginUser() {
     const password = passwordInput.value; // Get plain text password
 
     if (!username || !password) {
-        showNotification('Per favore, inserisci nome utente e password.', 'warning');
+        showNotification('Per favor e, inserisci nome utente e password.', 'warning');
         return;
     }
 
@@ -3257,8 +3467,10 @@ function loginUser() {
     if (foundUser) {
         currentUser = { ...foundUser }; // Store a copy of the user object, including roles
         localStorage.setItem('magliflex-currentUser', JSON.stringify(currentUser)); // Store entire object
-        document.getElementById('loginOverlay').classList.remove('show');
-        document.getElementById('appContent').style.display = 'flex'; // Changed to flex for proper layout
+        const loginOverlay = document.getElementById('loginOverlay');
+        const appContent = document.getElementById('appContent');
+        if (loginOverlay) loginOverlay.classList.remove('show');
+        if (appContent) appContent.style.display = 'flex'; // Changed to flex for proper layout
         showNotification(`Benvenuto, ${currentUser.username}!`, 'success');
         markWelcomeNotificationsAsRead(); // Mark specific notifications as read after adding "Benvenuto"
         updateNavMenuVisibility(); // Update nav menu visibility immediately after login
@@ -3286,8 +3498,10 @@ function logoutUser(showMessage = true) {
     localStorage.removeItem('magliflex-currentUser');
     localStorage.removeItem('magliflex-data'); // Clear all app data on logout
     resetAppDataToDefaultsAndAddExamples(); // Re-initialize with default/example data
-    document.getElementById('appContent').style.display = 'none';
-    document.getElementById('loginOverlay').classList.add('show');
+    const appContent = document.getElementById('appContent');
+    const loginOverlay = document.getElementById('loginOverlay');
+    if (appContent) appContent.style.display = 'none';
+    if (loginOverlay) loginOverlay.classList.add('show');
     
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput');
