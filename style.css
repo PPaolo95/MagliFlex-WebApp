@@ -1,6 +1,7 @@
 /* Stili generali per style.css */
 html {
     font-size: 100%; /* Base for rem units: 1rem = 16px (default browser font-size) */
+    height: 100%; /* Ensure html takes full height */
 }
 
 * {
@@ -16,6 +17,9 @@ body {
     color: #333;
     display: flex;
     flex-direction: column;
+    /* Centering the main app content container */
+    align-items: center; /* Center horizontally if container has max-width */
+    justify-content: flex-start; /* Align content to top */
 }
 
 /* Login Overlay */
@@ -91,14 +95,51 @@ body {
     color: #777;
 }
 
-/* Main Application Content */
-#appContent {
-    flex-grow: 1;
-    display: flex;
+/* Main Application Content Container */
+.container { /* This targets the #appContent div */
+    width: 100%; /* Take full width available */
+    max-width: 75rem; /* 1200px - Max width for the entire app content */
+    margin: 0 auto; /* Center the container horizontally */
+    flex-grow: 1; /* Allow it to grow vertically */
+    display: flex; /* Maintain flex layout for its children (top-bar, header, nav, main) */
     flex-direction: column;
+    padding: 1.5rem; /* Add padding around the main content */
+    position: relative; /* For z-index stacking context */
+    z-index: 1; /* Ensure it's below modals/overlays */
 }
 
-header {
+/* #appContent itself is initially hidden via inline style in HTML,
+   and changed to display:flex by JS after login. */
+#appContent.active { /* This class is added by JS after login */
+    display: flex;
+}
+
+/* Common styles for Page containers */
+.page {
+    background: white;
+    border-radius: 0.75rem; /* 12px */
+    padding: 2rem;
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1); /* 0 4px 16px */
+    display: none; /* Hidden by default */
+    flex-direction: column; /* Use flexbox for page content */
+    flex-grow: 1; /* Allow page to take available height */
+    margin-top: 1.5rem; /* Space between nav and page content */
+}
+
+.page.active {
+    display: flex; /* Only active page is visible */
+}
+
+/* Semantic Main tag for content pages */
+main {
+    flex-grow: 1; /* Allow main to take available vertical space */
+    display: flex;
+    flex-direction: column;
+    /* Removed padding from here as it's now on .container */
+}
+
+
+.top-bar {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(0.625rem); /* 10px */
     padding: 0.8rem 1.5rem;
@@ -114,7 +155,29 @@ header {
     border-bottom-right-radius: 0.75rem;
 }
 
-.header-left, .header-right {
+.header { /* This targets the desktop-only header */
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(0.625rem); /* 10px */
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    flex-direction: column; /* Stack h1 and p */
+    align-items: center;
+    color: white;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1); /* 0 2px 8px */
+    border-radius: 0.75rem; /* Rounded corners for the header card */
+    margin-top: 1.5rem; /* Space from top-bar */
+}
+
+.header h1 {
+    font-size: 2rem; /* Larger for desktop */
+    margin: 0;
+}
+.header p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.top-right-nav {
     display: flex;
     align-items: center;
     gap: 1rem; /* 16px */
@@ -138,7 +201,7 @@ header h1 {
     z-index: 200;
 }
 
-.hamburger-btn .bar {
+.hamburger-btn .hamburger-icon { /* Renamed 'bar' to 'hamburger-icon' for clarity */
     width: 100%;
     height: 0.1875rem; /* 3px */
     background-color: white;
@@ -146,30 +209,32 @@ header h1 {
     transition: all 0.3s ease-in-out;
 }
 
-.hamburger-btn.open .bar:nth-child(1) {
+.hamburger-btn.open .hamburger-icon:nth-child(1) {
     transform: translateY(0.5rem) rotate(45deg); /* 8px */
 }
 
-.hamburger-btn.open .bar:nth-child(2) {
+.hamburger-btn.open .hamburger-icon:nth-child(2) {
     opacity: 0;
 }
 
-.hamburger-btn.open .bar:nth-child(3) {
+.hamburger-btn.open .hamburger-icon:nth-child(3) {
     transform: translateY(-0.5rem) rotate(-45deg); /* -8px */
 }
 
 
-.notification-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.3); /* 1px */
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 1.25rem; /* 20px */
-    font-size: 0.9rem; /* 14.4px */
+.nav-btn.bell-btn { /* Specific style for bell button */
+    padding: 0.5rem; /* Smaller padding */
+    min-width: unset; /* Override min-width from general nav-btn */
+    flex-grow: 0;
     position: relative;
 }
 
-.notification-btn .badge {
+.bell-icon {
+    width: 1.5rem; /* 24px */
+    height: 1.5rem;
+}
+
+.notification-badge {
     position: absolute;
     top: -0.375rem; /* -6px */
     right: -0.375rem; /* -6px */
@@ -181,15 +246,15 @@ header h1 {
     font-weight: bold;
     min-width: 1.5rem; /* 24px */
     text-align: center;
-    display: none;
+    display: none; /* Hidden by default, shown by JS */
 }
 
-nav {
+nav { /* Main Navigation Menu */
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(0.3125rem); /* 5px */
     padding: 1rem;
     border-radius: 0.75rem; /* 12px */
-    margin: 1.5rem;
+    margin-top: 1.5rem; /* Space from header/top-bar */
     display: flex;
     flex-wrap: wrap; /* Allow wrapping on smaller screens */
     gap: 0.75rem; /* 12px */
@@ -221,26 +286,6 @@ nav .nav-btn.active {
     box-shadow: 0 0.125rem 0.5rem rgba(102, 126, 234, 0.4); /* 0 2px 8px */
 }
 
-main {
-    flex-grow: 1;
-    padding: 0 1.5rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.page {
-    background: white;
-    border-radius: 0.75rem; /* 12px */
-    padding: 2rem;
-    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.1); /* 0 4px 16px */
-    display: none;
-    flex-direction: column; /* Use flexbox for page content */
-    flex-grow: 1; /* Allow page to take available height */
-}
-
-.page.active {
-    display: flex;
-}
 
 h2 {
     color: #667eea;
@@ -250,22 +295,37 @@ h2 {
     padding-bottom: 0.75rem; /* 12px */
 }
 
-/* Form Section */
-.form-section {
-    background-color: #f9f9f9;
-    border: 0.0625rem solid #eee; /* 1px */
-    border-radius: 0.625rem; /* 10px */
-    padding: 1.5rem;
-    margin-bottom: 1.5rem; /* 24px */
-    box-shadow: inset 0 0 0.5rem rgba(0,0,0,0.02); /* 0 0 8px */
+/* Cards for content sections like Dashboard stats, Raw Materials form */
+.card {
+    background: white;
+    border-radius: 0.75rem; /* 12px */
+    padding: 1.5rem; /* Increased padding for better spacing */
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.08); /* 0 2px 8px */
+    margin-bottom: 1.5rem; /* Consistent spacing between cards */
 }
 
-.form-section h3, .table-section h3 {
+.grid { /* For dashboard stats, raw materials forms */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); /* Responsive grid columns */
+    gap: 1.5rem; /* Space between grid items */
+    margin-bottom: 1.5rem; /* Space below the grid */
+}
+
+.grid .card {
+    margin-bottom: 0; /* Remove margin from individual cards within a grid */
+}
+
+.card h3 {
     color: #764ba2;
     margin-bottom: 1rem; /* 16px */
     font-size: 1.3rem; /* 20.8px */
+    border-bottom: 0.0625rem dotted #eee; /* Light separator */
+    padding-bottom: 0.5rem;
 }
 
+
+/* Form Section */
+/* Removed .form-section as .card handles similar styling */
 .form-group {
     margin-bottom: 1rem; /* 16px */
 }
@@ -313,12 +373,19 @@ h2 {
 }
 
 /* Checkbox group styling */
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem; /* Space between checkboxes */
+}
+
 .checkbox-group label {
     display: flex;
     align-items: center;
-    margin-bottom: 0.5rem; /* 8px */
+    margin-bottom: 0; /* Removed margin-bottom here */
     font-weight: normal; /* Override bold from .form-group label */
     color: #333;
+    cursor: pointer;
 }
 
 .checkbox-group input[type="checkbox"] {
@@ -326,6 +393,23 @@ h2 {
     margin-right: 0.5rem; /* 8px */
     height: 1.125rem; /* 18px */
     width: 1.125rem; /* 18px */
+    cursor: pointer;
+}
+
+.checkbox-group-single { /* For single checkbox like "force password change" */
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.checkbox-group-single label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    color: #333;
+    cursor: pointer;
+}
+.checkbox-group-single input[type="checkbox"] {
+    margin-right: 0.5rem;
+    cursor: pointer;
 }
 
 
@@ -388,15 +472,7 @@ h2 {
 }
 
 /* Table Section */
-.table-section {
-    background-color: #f9f9f9;
-    border: 0.0625rem solid #eee; /* 1px */
-    border-radius: 0.625rem; /* 10px */
-    padding: 1.5rem;
-    margin-bottom: 1.5rem; /* 24px */
-    box-shadow: inset 0 0 0.5rem rgba(0,0,0,0.02); /* 0 0 8px */
-    overflow-x: auto; /* Enable horizontal scroll for table */
-}
+/* Removed .table-section as .card handles similar styling */
 
 .table {
     width: 100%;
@@ -404,9 +480,9 @@ h2 {
     margin-top: 1rem; /* 16px */
     background: white;
     border-radius: 0.5rem; /* 8px */
-    overflow: hidden;
+    overflow: hidden; /* Ensures rounded corners apply to content */
     box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.08); /* 0 2px 8px */
-    table-layout: fixed; /* Ensures columns take equal width or based on content if width is set */
+    table-layout: auto; /* Changed to auto to allow content to dictate column width */
 }
 
 .table thead th {
@@ -439,24 +515,17 @@ h2 {
     margin: 0.1rem; /* Small margin for buttons in table */
 }
 
-
 /* Dashboard specific styles */
-.dashboard-section {
-    background-color: #f9f9f9;
-    border: 0.0625rem solid #eee; /* 1px */
-    border-radius: 0.625rem; /* 10px */
-    padding: 1.5rem;
-    margin-bottom: 1.5rem; /* 24px */
-    box-shadow: inset 0 0 0.5rem rgba(0,0,0,0.02); /* 0 0 8px */
-}
+/* Removed .dashboard-section as .card handles similar styling */
 
-.stats-grid {
+.dashboard-stats-grid { /* Renamed from .stats-grid to be more specific */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); /* 192px */
     gap: 1rem; /* 16px */
+    margin-bottom: 1.5rem; /* Space below dashboard grid */
 }
 
-.stats-grid p {
+.dashboard-stats-grid p {
     background-color: white;
     padding: 0.8rem;
     border-radius: 0.5rem; /* 8px */
@@ -474,21 +543,22 @@ h2 {
 }
 
 .chart-container {
-    background-color: white;
+    background-color: #f9f9f9; /* Changed to match card background */
     border: 0.0625rem solid #eee; /* 1px */
-    border-radius: 0.5rem; /* 8px */
-    padding: 1rem;
+    border-radius: 0.75rem; /* 12px */
+    padding: 1.5rem;
     min-height: 12.5rem; /* 200px */
     display: flex;
     justify-content: center;
     align-items: center;
     color: #888;
     font-style: italic;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.08); /* Added shadow for consistency */
 }
 
 
 /* Specific styles for dynamic lists (Cycle, BOM) */
-.dynamic-list-container {
+.cycle-builder, .bom-builder { /* Using these existing classes for containers */
     border: 0.0625rem dashed #ccc; /* 1px */
     padding: 1rem;
     border-radius: 0.5rem; /* 8px */
@@ -497,8 +567,8 @@ h2 {
     background-color: white;
 }
 
-.dynamic-list-container .cycle-step,
-.dynamic-list-container .bom-item {
+.cycle-step,
+.bom-item {
     display: flex;
     flex-wrap: wrap; /* Allow wrapping */
     gap: 0.75rem; /* 12px */
@@ -509,19 +579,20 @@ h2 {
     align-items: center;
 }
 
-.dynamic-list-container .cycle-step > *,
-.dynamic-list-container .bom-item > * {
+.cycle-step > *,
+.bom-item > * {
     flex: 1; /* Distribute space */
     min-width: 8rem; /* Minimum width for inputs/selects */
 }
 
-.dynamic-list-container .btn-danger {
+.cycle-step .btn-danger,
+.bom-item .btn-danger {
     flex-grow: 0; /* Don't let remove button grow */
     min-width: unset;
 }
 
 /* Planning page specific */
-.result-box {
+.result-box { /* Apply to planning result card if needed */
     background-color: #eef2ff;
     border: 0.0625rem solid #ccddff; /* 1px */
     border-radius: 0.625rem; /* 10px */
@@ -531,7 +602,7 @@ h2 {
     font-size: 0.95rem; /* 15.2px */
 }
 
-.result-box .delivery-date {
+.delivery-date {
     background: #dff0d8;
     border: 0.0625rem solid #c3e6cb; /* 1px */
     padding: 0.75rem; /* 12px */
@@ -543,7 +614,7 @@ h2 {
     margin-bottom: 1rem; /* 16px */
 }
 
-.planning-cards-container {
+#planningList { /* Changed from .planning-cards-container */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); /* 288px */
     gap: 1.25rem; /* 20px */
@@ -610,16 +681,9 @@ h2 {
 
 
 /* Calendar page specific */
-.calendar-section {
-    background-color: #f9f9f9;
-    border: 0.0625rem solid #eee; /* 1px */
-    border-radius: 0.625rem; /* 10px */
-    padding: 1.5rem;
-    margin-bottom: 1.5rem; /* 24px */
-    box-shadow: inset 0 0 0.5rem rgba(0,0,0,0.02); /* 0 0 8px */
-}
+/* Removed .calendar-section as .card handles similar styling */
 
-.calendar-nav {
+.week-view-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -631,7 +695,7 @@ h2 {
     gap: 0.5rem; /* 8px */
 }
 
-.calendar-nav .btn {
+.week-view-controls .btn {
     flex-grow: 1; /* Allow buttons to grow */
     min-width: 9rem; /* 144px */
     text-align: center;
@@ -639,7 +703,7 @@ h2 {
     font-size: 0.9rem;
 }
 
-.calendar-nav span {
+.week-view-controls span {
     font-weight: bold;
     color: #3a5795;
     font-size: 1rem; /* 16px */
@@ -648,7 +712,7 @@ h2 {
     white-space: nowrap;
 }
 
-.calendar-grid {
+.week-grid { /* Renamed from .calendar-grid */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); /* 128px */
     gap: 0.75rem; /* 12px */
@@ -721,7 +785,7 @@ h2 {
 
 
 /* Modal Styles (General for notifications, consumption, edit planning) */
-.modal {
+.modal-overlay { /* Renamed from .modal to avoid conflict and align with HTML */
     position: fixed;
     top: 0;
     left: 0;
@@ -737,7 +801,7 @@ h2 {
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.modal.show {
+.modal-overlay.show {
     opacity: 1;
     visibility: visible;
 }
@@ -754,11 +818,11 @@ h2 {
     transition: transform 0.3s ease;
 }
 
-.modal.show .modal-content {
+.modal-overlay.show .modal-content { /* Changed from .modal.show */
     transform: translateY(0);
 }
 
-.modal-content h3 {
+.modal-content h4 { /* Changed from h3 to h4 to match HTML and hierarchy */
     color: #667eea;
     margin-bottom: 1rem; /* 16px */
     font-size: 1.4rem; /* 22.4px */
@@ -766,6 +830,7 @@ h2 {
     padding-bottom: 0.5rem; /* 8px */
 }
 
+/* Close button for modals - not used in current HTML but good to keep */
 .modal-content .close-button {
     position: absolute;
     top: 0.75rem; /* 12px */
@@ -786,11 +851,13 @@ h2 {
     margin-bottom: 1rem;
 }
 
-.modal-content .form-actions {
+.modal-buttons { /* Changed from .modal-content .form-actions */
     margin-top: 1.25rem; /* 20px */
+    display: flex;
     justify-content: flex-end;
+    gap: 0.75rem;
 }
-.modal-content .form-actions .btn {
+.modal-buttons .btn {
     min-width: auto;
 }
 
@@ -801,7 +868,7 @@ h2 {
     text-align: left;
 }
 
-.notification-filters {
+.notification-filter-buttons { /* Renamed from .notification-filters */
     margin-bottom: 1rem; /* 16px */
     text-align: center;
     display: flex;
@@ -809,42 +876,11 @@ h2 {
     gap: 0.5rem; /* 8px */
 }
 
-.notification-filters .btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem; /* 13.6px */
-    background-color: #f0f2f5;
-    color: #555;
-    border: 0.0625rem solid #ddd; /* 1px */
-}
-.notification-filters .btn.active {
+.notification-filter-buttons .active { /* Renamed from .notification-filters .btn.active */
     background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-color: #667eea;
 }
-
-.notification-list {
-    max-height: 20rem; /* 320px - Enable scrolling for notifications */
-    overflow-y: auto;
-    padding-right: 0.5rem; /* 8px for scrollbar */
-}
-
-.notification-item {
-    background-color: #f8f8f8;
-    border: 0.0625rem solid #eee; /* 1px */
-    border-left: 0.375rem solid; /* 6px */
-    padding: 0.75rem;
-    margin-bottom: 0.5rem; /* 8px */
-    border-radius: 0.375rem; /* 6px */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem; /* 14.4px */
-}
-
-.notification-item.success { border-left-color: #2ecc71; }
-.notification-item.error { border-left-color: #e74c3c; }
-.notification-item.info { border-left-color: #3498db; }
-.notification-item.warning { border-left-color: #f39c12; }
 
 .notification-item-content {
     flex-grow: 1;
@@ -881,15 +917,22 @@ h2 {
 
 /* Responsive Design */
 @media (max-width: 48rem) { /* 768px */
-    header {
+    .top-bar { /* Renamed from header to top-bar */
         padding: 0.6rem 1rem;
     }
-    header h1 {
+    .top-bar h1 { /* Renamed from header h1 */
         font-size: 1.5rem; /* 24px */
     }
     .hamburger-btn {
         display: flex; /* Show hamburger on mobile */
     }
+    .desktop-only { /* Hide desktop specific header on mobile */
+        display: none;
+    }
+    .app-title-mobile { /* Show mobile title */
+        display: block; /* Ensure it's visible, often hidden by default */
+    }
+
     nav {
         /* Mobile menu styles when open */
         position: fixed;
@@ -904,6 +947,7 @@ h2 {
         transition: transform 0.3s ease-in-out;
         z-index: 40; /* Below header but above main content */
         overflow-y: auto; /* Enable scroll for long menus */
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Full gradient background for nav */
     }
     nav.open {
         transform: translateX(0); /* Slide in */
@@ -917,8 +961,8 @@ h2 {
         margin-bottom: 0;
     }
 
-    main {
-        padding: 0 1rem 1rem;
+    .container { /* Adjust container padding for smaller screens */
+        padding: 1rem;
     }
 
     .page {
@@ -931,12 +975,12 @@ h2 {
         padding-bottom: 0.5rem;
     }
 
-    .form-section, .table-section, .dashboard-section, .calendar-section {
+    .card { /* Adjust card padding for smaller screens */
         padding: 1rem;
         margin-bottom: 1rem;
     }
 
-    .form-section h3, .table-section h3 {
+    .card h3 {
         font-size: 1.2rem; /* 19.2px */
         margin-bottom: 0.8rem;
     }
@@ -960,43 +1004,49 @@ h2 {
         font-size: 0.85rem; /* 13.6px */
     }
 
-    .stats-grid {
+    .grid {
         grid-template-columns: 1fr; /* Stack on mobile */
+        gap: 1rem;
+    }
+    .dashboard-stats-grid {
+        grid-template-columns: 1fr; /* Stack on mobile */
+        gap: 1rem;
     }
 
-    .dynamic-list-container .cycle-step,
-    .dynamic-list-container .bom-item {
+
+    .cycle-step,
+    .bom-item {
         flex-direction: column; /* Stack inputs vertically */
         align-items: stretch;
     }
-    .dynamic-list-container .cycle-step > *,
-    .dynamic-list-container .bom-item > * {
+    .cycle-step > *,
+    .bom-item > * {
         min-width: unset; /* Remove min-width when stacked */
         width: 100%;
     }
 
-    .calendar-nav {
+    .week-view-controls {
         flex-direction: column;
     }
-    .calendar-nav .btn {
+    .week-view-controls .btn {
         width: 100%;
         margin-bottom: 0.5rem; /* 8px */
     }
-    .calendar-nav span {
+    .week-view-controls span {
         margin-bottom: 0.5rem; /* 8px */
     }
-    .calendar-nav .btn:last-child {
+    .week-view-controls .btn:last-child {
         margin-bottom: 0;
     }
 
-    .calendar-grid {
+    .week-grid {
         grid-template-columns: 1fr; /* Stack days on mobile */
     }
 
     .modal-content {
         padding: 1.2rem;
     }
-    .modal-content h3 {
+    .modal-content h4 { /* Changed from h3 */
         font-size: 1.3rem; /* 20.8px */
     }
     .notification-item {
@@ -1010,14 +1060,14 @@ h2 {
 }
 
 @media (max-width: 25rem) { /* 400px for very small phones */
-    header h1 {
+    .top-bar h1 {
         font-size: 1.3rem; /* 20.8px */
     }
-    .notification-btn {
+    .nav-btn.bell-btn { /* Use more specific selector */
         padding: 0.4rem 0.8rem;
         font-size: 0.8rem; /* 12.8px */
     }
-    .notification-btn .badge {
+    .notification-badge {
         font-size: 0.65rem; /* 10.4px */
         min-width: 1.2rem; /* 19.2px */
     }
@@ -1032,3 +1082,4 @@ h2 {
         font-size: 1.5rem;
     }
 }
+
