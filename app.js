@@ -67,20 +67,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 logoutUser(false); // Logout without showing "Logged out" message
                 if (loginOverlay) loginOverlay.classList.add('show');
                 if (appContent) appContent.style.display = 'none';
-                initializeLoginElements(); // Initialize login elements if showing overlay
+                // Call initializeLoginElements with a delay to ensure DOM is ready
+                setTimeout(initializeLoginElements, 100); 
             }
         } catch (e) {
             console.error("Errore nel parsing dell'utente salvato:", e);
             logoutUser(false); // Logout if saved user data is corrupted
             if (loginOverlay) loginOverlay.classList.add('show');
             if (appContent) appContent.style.display = 'none';
-            initializeLoginElements(); // Initialize login elements if showing overlay
+            // Call initializeLoginElements with a delay to ensure DOM is ready
+            setTimeout(initializeLoginElements, 100);
         }
     } else {
         if (loginOverlay) loginOverlay.classList.add('show');
         if (appContent) appContent.style.display = 'none';
         console.log("Nessun utente salvato, mostrando overlay di login.");
-        initializeLoginElements(); // Initialize login elements if showing overlay
+        // Call initializeLoginElements with a delay to ensure DOM is ready
+        setTimeout(initializeLoginElements, 100); 
     }
 
     // Set up barcode input listener
@@ -617,7 +620,7 @@ function showPage(pageId) {
     // Close the navigation menu when a page is selected (for mobile)
     const mainNavMenu = document.getElementById('mainNavMenu');
     const hamburgerBtn = document.querySelector('.hamburger-btn');
-    if (mainNavMenu && hamburgerBtn && mainNavMenu.classList.contains('open')) { // Check for existence
+    if (mainNavMenu && hamburgerBtn) { // Check for existence
         mainNavMenu.classList.remove('open');
         hamburgerBtn.classList.remove('open');
         console.log("showPage: Menu di navigazione chiuso.");
@@ -2750,7 +2753,7 @@ function updatePlanningList() {
         const article = appData.articles.find(a => a.id === plan.articleId);
         const articleInfo = article ? `${article.code} - ${article.description}` : 'Articolo Sconosciuto';
         const formattedStartDate = new Date(plan.startDate).toLocaleDateString('it-IT');
-        const formattedDeliveryDate = new Date(plan.estimatedDeliveryDate).toLocaleDateString('it-IT');
+        const formattedDeliveryDate = new Date(plan.estimatedDeliveryDate).toLocaleDate('it-IT'); // Changed from ToLocaleDateString
         const priorityClass = `priority-${plan.priority}`;
         const typeClass = `plan-type-${plan.type || 'production'}`; // Apply type class
 
@@ -3487,7 +3490,7 @@ function loginUser() {
     const password = passwordInput.value; // Get plain text password
 
     if (!username || !password) {
-        showNotification('Per favore, inserisci nome utente e password.', 'warning');
+        showNotification('Per fare il login, inserisci un nome utente e una password.', 'warning');
         return;
     }
 
@@ -3542,7 +3545,7 @@ function logoutUser(showMessage = true) {
     }
     updateNavMenuVisibility(); // Update nav menu visibility after logout (hide admin buttons)
     // Re-initialize login elements after logout, as the overlay is now visible
-    initializeLoginElements(); 
+    setTimeout(initializeLoginElements, 100); 
     console.log("logoutUser: Logout completato.");
 }
 
