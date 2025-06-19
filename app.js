@@ -1814,7 +1814,7 @@ function updateArticlesTable() {
             <td>${bomDisplay}</td>
             <td>
                 <button class="btn" onclick="editArticle(${article.id})">Modifica</button>
-                <button class="btn" onclick="deleteArticle(${article.id})">Elimina</button>
+                <button class="btn btn-danger" onclick="deleteArticle(${article.id})">Elimina</button>
             </td>
         `;
         tbody.appendChild(row);
