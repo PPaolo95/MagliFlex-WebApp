@@ -443,7 +443,7 @@ input[type="file"] {
 }
 /* Style for week navigation buttons text color */
 .week-view-controls .btn {
-    margin: 0 0.3125rem; /* 0 5px */
+    /* Rimuovi margin: 0 0.3125rem; per desktop per far funzionare bene space-between */
     padding: 0.5rem 0.9375rem; /* 8px 15px */
     font-size: 0.9rem; /* 14.4px */
     background: rgba(255,255,255,0.2);
