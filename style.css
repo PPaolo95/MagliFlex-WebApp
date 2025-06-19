@@ -18,7 +18,7 @@ body {
 
 .container {
     max-width: 75rem; /* 1200px / 16 = 75rem */
-    margin: 0 auto;
+    margin: 0 auto; /* Centra il container */
     padding: 1.25rem; /* 20px / 16 = 1.25rem */
 }
 
@@ -205,6 +205,7 @@ body {
     backdrop-filter: blur(0.625rem); /* 10px */
     animation: fadeInUp 0.6s ease-out;
     margin-top: 1.25rem; /* Added margin-top to account for top-bar */
+    width: 100%; /* Ensure page takes full width */
 }
 
 .page.active {
@@ -437,17 +438,17 @@ input[type="file"] {
     border-radius: 0.625rem; /* 10px */
     color: white;
     backdrop-filter: blur(0.3125rem); /* 5px */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    text-align: center;
+    /* Rimuovi flex-wrap per desktop, i pulsanti devono stare sulla stessa riga */
+    flex-wrap: nowrap; 
 }
 /* Style for week navigation buttons text color */
 .week-view-controls .btn {
-    margin: 0.3125rem; /* 5px */
+    margin: 0 0.3125rem; /* 0 5px */
     padding: 0.5rem 0.9375rem; /* 8px 15px */
     font-size: 0.9rem; /* 14.4px */
     background: rgba(255,255,255,0.2);
     color: black; /* Changed to black for readability */
-    flex-grow: 1; /* Allow buttons to grow */
+    flex-grow: 0; /* Rimuovi flex-grow per i bottoni su desktop */
 }
 .week-view-controls .btn:hover {
     background: rgba(255,255,255,0.3);
@@ -456,8 +457,8 @@ input[type="file"] {
     font-size: 1.1rem; /* 17.6px */
     font-weight: bold;
     color: black; /* Changed to black for readability */
-    flex-basis: 100%; /* Full width for text on small screens */
-    margin: 0.5rem 0; /* Add margin for text */
+    flex-basis: auto; /* Rimuovi flex-basis: 100% per desktop */
+    margin: 0; /* Rimuovi margini per desktop */
 }
 
 .week-grid {
@@ -840,6 +841,20 @@ select[multiple] option:checked {
 
     .login-container {
         padding: 2rem; /* Adjusted login container padding */
+    }
+
+    /* Modifiche specifiche per mobile per i controlli settimana */
+    .week-view-controls {
+        flex-wrap: wrap; /* Avvolgi i pulsanti su schermi più piccoli */
+        justify-content: center; /* Centra i pulsanti quando sono avvolti */
+    }
+    .week-view-controls .btn {
+        flex-grow: 1; /* Permetti ai pulsanti di crescere per occupare lo spazio disponibile */
+        margin: 0.3125rem; /* Margini tra i pulsanti */
+    }
+    .week-view-controls span {
+        flex-basis: 100%; /* Il testo della settimana occupa tutta la larghezza */
+        margin: 0.5rem 0; /* Margine sopra e sotto il testo */
     }
 }
 
