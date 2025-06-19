@@ -117,10 +117,14 @@ body {
     opacity: 0;
     transition: max-height 0.4s ease-out, opacity 0.3s ease-out, transform 0.4s ease-out; /* Add transform for sliding effect */
     transform: translateX(-100%); /* Start off-screen */
+    
+    /* Added for scrollability */
+    max-height: calc(100vh - 6rem); /* Max height to allow scrolling, adjust based on top-bar height */
+    overflow-y: auto; /* Enable vertical scrolling */
 }
 
 .main-nav-menu.open {
-    max-height: 25rem; /* Enough height for menu items */
+    max-height: calc(100vh - 6rem); /* Enough height for menu items */
     opacity: 1;
     transform: translateX(0); /* Slide into view */
 }
@@ -278,7 +282,8 @@ input[type="file"] {
 
 /* Tabelle */
 .table {
-    width: 100%;
+    width: 100%; /* Ensure table takes full width */
+    table-layout: fixed; /* Distribute columns evenly */
     border-collapse: collapse;
     margin-top: 1.25rem; /* 20px */
     background: white;
@@ -291,6 +296,7 @@ input[type="file"] {
     padding: 0.75rem; /* 12px */
     text-align: left;
     border-bottom: 0.0625rem solid #eee; /* 1px */
+    word-wrap: break-word; /* Ensure text wraps within cells */
 }
 
 .table th {
@@ -438,17 +444,18 @@ input[type="file"] {
     border-radius: 0.625rem; /* 10px */
     color: white;
     backdrop-filter: blur(0.3125rem); /* 5px */
-    /* Rimuovi flex-wrap per desktop, i pulsanti devono stare sulla stessa riga */
-    flex-wrap: nowrap; 
+    flex-wrap: nowrap; /* Imposta sempre su nowrap per prevenire il wrapping non desiderato su schermi ampi */
 }
+
 /* Style for week navigation buttons text color */
 .week-view-controls .btn {
-    /* Rimuovi margin: 0 0.3125rem; per desktop per far funzionare bene space-between */
+    margin: 0; /* Rimuove tutti i margini sui bottoni per farli distribuire correttamente */
+    flex-basis: auto; /* La larghezza dei bottoni è basata sul contenuto */
+    flex-grow: 0; /* Impedisce ai bottoni di crescere e occupare spazio eccessivo */
     padding: 0.5rem 0.9375rem; /* 8px 15px */
     font-size: 0.9rem; /* 14.4px */
     background: rgba(255,255,255,0.2);
     color: black; /* Changed to black for readability */
-    flex-grow: 0; /* Rimuovi flex-grow per i bottoni su desktop */
 }
 .week-view-controls .btn:hover {
     background: rgba(255,255,255,0.3);
@@ -457,8 +464,10 @@ input[type="file"] {
     font-size: 1.1rem; /* 17.6px */
     font-weight: bold;
     color: black; /* Changed to black for readability */
-    flex-basis: auto; /* Rimuovi flex-basis: 100% per desktop */
+    flex-basis: auto; /* Il testo della settimana occupa solo lo spazio necessario */
+    flex-grow: 0; /* Impedisce al testo di crescere eccessivamente */
     margin: 0; /* Rimuovi margini per desktop */
+    text-align: center; /* Assicura che il testo sia centrato */
 }
 
 .week-grid {
